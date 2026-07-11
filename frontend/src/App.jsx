@@ -688,6 +688,39 @@ function App() {
                       </div>
                     </div>
 
+                    {/* Hover Detail Bar */}
+                    {hoveredPoint ? (
+                      <div className="trend-hover-details-bar fade-in">
+                        <span className="trend-hover-time">🕒 {hoveredPoint.label}</span>
+                        <div className="trend-hover-values">
+                          {trendProviders.includes('cash') && (
+                            <span className="trend-hover-val-item text-cash">
+                              Cash: <strong>{hoveredPoint.cash.toLocaleString()} BDT</strong>
+                            </span>
+                          )}
+                          {trendProviders.includes('bkash') && (
+                            <span className="trend-hover-val-item text-bkash">
+                              bKash: <strong>{hoveredPoint.bkash.toLocaleString()} BDT</strong>
+                            </span>
+                          )}
+                          {trendProviders.includes('nagad') && (
+                            <span className="trend-hover-val-item text-nagad">
+                              Nagad: <strong>{hoveredPoint.nagad.toLocaleString()} BDT</strong>
+                            </span>
+                          )}
+                          {trendProviders.includes('rocket') && (
+                            <span className="trend-hover-val-item text-rocket">
+                              Rocket: <strong>{hoveredPoint.rocket.toLocaleString()} BDT</strong>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="trend-hover-details-placeholder">
+                        💡 Hover over the graph points to see detailed BDT balance readings.
+                      </div>
+                    )}
+
                     <div style={{ position: 'relative', width: '100%', height: '220px' }}>
                       <svg viewBox="0 0 600 220" width="100%" height="100%" style={{ overflow: 'visible' }}>
                         <defs>
@@ -859,36 +892,6 @@ function App() {
                         })()}
                       </svg>
 
-                      {/* Tooltip Overlay */}
-                      {hoveredPoint && (
-                        <div className="trend-tooltip glass-card">
-                          <div className="trend-tooltip-title">
-                            🕒 {hoveredPoint.label}
-                          </div>
-                          <div className="trend-tooltip-grid">
-                            {trendProviders.includes('cash') && (
-                              <div className="trend-tooltip-row text-cash">
-                                <span>🔹 Cash:</span> <strong>{hoveredPoint.cash.toLocaleString()} BDT</strong>
-                              </div>
-                            )}
-                            {trendProviders.includes('bkash') && (
-                              <div className="trend-tooltip-row text-bkash">
-                                <span>💗 bKash:</span> <strong>{hoveredPoint.bkash.toLocaleString()} BDT</strong>
-                              </div>
-                            )}
-                            {trendProviders.includes('nagad') && (
-                              <div className="trend-tooltip-row text-nagad">
-                                <span>🔸 Nagad:</span> <strong>{hoveredPoint.nagad.toLocaleString()} BDT</strong>
-                              </div>
-                            )}
-                            {trendProviders.includes('rocket') && (
-                              <div className="trend-tooltip-row text-rocket">
-                                <span>🔮 Rocket:</span> <strong>{hoveredPoint.rocket.toLocaleString()} BDT</strong>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>

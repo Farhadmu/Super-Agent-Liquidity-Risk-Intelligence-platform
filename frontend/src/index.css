@@ -1701,41 +1701,51 @@ header {
   background: rgba(255, 255, 255, 0.05) !important;
 }
 
-/* Glassmorphic Chart Tooltip */
-.trend-tooltip {
-  pointer-events: none;
-  padding: 0.6rem 0.8rem;
-  border-radius: 0.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
-  font-size: 0.75rem;
-  line-height: 1.4;
-  text-align: left;
-  background: rgba(17, 24, 39, 0.9);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-  min-width: 140px;
-  transition: left 0.15s ease-out;
+/* Inline Chart Hover Details Bar */
+.trend-hover-details-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.65rem 1rem;
+  background: rgba(17, 24, 39, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.75rem;
+  font-size: 0.85rem;
+  flex-wrap: wrap;
+  min-height: 2.5rem;
 }
 
-.trend-tooltip-title {
+.trend-hover-time {
   font-weight: 700;
-  margin-bottom: 0.35rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  padding-bottom: 0.2rem;
   color: #fff;
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
+  padding-right: 1rem;
 }
 
-.trend-tooltip-grid {
+.trend-hover-values {
   display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
 }
 
-.trend-tooltip-row {
+.trend-hover-val-item {
   display: flex;
-  justify-content: space-between;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.trend-hover-details-placeholder {
+  display: flex;
+  align-items: center;
+  min-height: 2.5rem;
+  padding: 0.65rem 1rem;
+  background: rgba(17, 24, 39, 0.2);
+  border: 1px dashed rgba(255, 255, 255, 0.06);
+  border-radius: 0.75rem;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  font-style: italic;
 }
 
 .text-cash { color: #93C5FD; }
