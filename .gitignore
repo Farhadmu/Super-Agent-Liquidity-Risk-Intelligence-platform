@@ -1,0 +1,32 @@
+# Python virtual environment
+venv/
+.env
+.env.local
+.env.*.local
+*.env
+
+# SQLite production database
+production.db
+*.db
+*.sqlite3
+
+# Python cache / builds
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# Frontend builds and dependencies
+node_modules/
+frontend/node_modules/
+frontend/dist/
+
+# OS files
+.DS_Store
+Thumbs.db

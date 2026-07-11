@@ -1,5 +1,14 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
+
+// Theme management
+const getInitialTheme = () => {
+  try {
+    const saved = window.localStorage.getItem('superAgentTheme');
+    if (saved) return saved;
+  } catch { /* ignore */ }
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+};
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
@@ -187,6 +196,7 @@ const getTrendData = (agentOverview, hours = 2) => {
 };
 
 function App() {
+  const [theme, setTheme] = useState(getInitialTheme);
   const [currentUser, setCurrentUser] = useState(getSavedUser);
   const [activeTab, setActiveTab] = useState(currentUser?.defaultTab || 'agent'); // 'agent' or 'ops'
   const agentsList = AGENTS_LIST;
@@ -246,6 +256,7 @@ function App() {
   const [sandboxMessage, setSandboxMessage] = useState('');
   const [sandboxLoading, setSandboxLoading] = useState(false);
   const [reassignTargetRole, setReassignTargetRole] = useState('provider_ops');
+  const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
 
   const actorName = currentUser?.name || 'Demo User';
   const actorRole = currentUser?.role || 'viewer';
@@ -261,6 +272,20 @@ function App() {
     && (selectedCase.assigned_role === actorRole || actorRole === 'admin' || actorRole === 'management')
     && selectedCase.status !== 'resolved'
   );
+
+  // Theme toggle
+  const toggleTheme = () => {
+    setTheme(prev => {
+      const next = prev === 'dark' ? 'light' : 'dark';
+      try { window.localStorage.setItem('superAgentTheme', next); } catch { /* ignore */ }
+      return next;
+    });
+  };
+
+  // Apply theme to document
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
 
   const showTooltip = (text, target) => {
     const rect = target.getBoundingClientRect();
@@ -654,33 +679,47 @@ function App() {
     return (
       <main className="login-shell">
         <TooltipOverlay />
-        <section className="glass-card login-panel fade-in">
+
+        {/* Theme toggle fixed on screen */}
+        <button
+          className="theme-toggle-btn login-theme-toggle"
+          onClick={toggleTheme}
+          aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+        >
+          {theme === 'dark' ? '☀️' : '🌙'}
+        </button>
+
+        <section className="login-panel fade-in">
           <div className="login-layout">
+            {/* LEFT: Form */}
             <div className="login-form-column">
               <div className="login-brand">
-                <div className="logo-icon">Ω</div>
+                <div className="logo-icon" aria-hidden="true">Ω</div>
                 <div>
-                  <h1 className="logo-text">SUPER-AGENT</h1>
-                  <span className="logo-subtitle">ROLE-BASED DEMO ACCESS</span>
+                  <div className="login-brand-title">SUPER-AGENT</div>
+                  <div className="login-brand-sub">Multi-Provider Liquidity Platform</div>
                 </div>
               </div>
 
               <div className="login-intro">
-                <h2>Sign In</h2>
-                <span className="compact-note">
-                  Demo mode <HelpDot text="Each demo account opens the portal with role-based case access and audit identity." />
-                </span>
+                <h2>Welcome Back</h2>
+                <p>
+                  Role-based demo access&nbsp;
+                  <HelpDot text="Each demo account opens the portal with role-specific case access and full audit identity." />
+                </p>
               </div>
 
-              <form className="login-form" onSubmit={handleLoginSubmit}>
+              <form className="login-form" onSubmit={handleLoginSubmit} noValidate>
                 <label className="login-field">
-                  <span>Role</span>
+                  <span>Select Role</span>
                   <select
                     value={loginRoleId}
                     onChange={e => handleLoginRoleChange(e.target.value)}
+                    aria-label="Select demo role"
                   >
                     {DEMO_USERS.filter(user => user.role !== 'admin').map(user => (
-                      <option key={user.id} value={user.id}>{user.roleLabel}</option>
+                      <option key={user.id} value={user.id}>{user.roleLabel} — {user.name}</option>
                     ))}
                   </select>
                 </label>
@@ -691,6 +730,8 @@ function App() {
                     value={loginUsername}
                     onChange={e => setLoginUsername(e.target.value)}
                     autoComplete="username"
+                    placeholder="Enter username"
+                    aria-label="Username"
                   />
                 </label>
 
@@ -701,26 +742,33 @@ function App() {
                     value={loginPassword}
                     onChange={e => setLoginPassword(e.target.value)}
                     autoComplete="current-password"
+                    placeholder="Enter password"
+                    aria-label="Password"
                   />
                 </label>
 
-                {loginError && <div className="login-error">{loginError}</div>}
+                {loginError && (
+                  <div className="login-error" role="alert">
+                    <span>⚠️</span> {loginError}
+                  </div>
+                )}
 
                 <button className="btn btn-primary login-submit-btn" type="submit">
-                  Enter Dashboard
+                  Enter Dashboard →
                 </button>
               </form>
 
-              <div className="login-credential-strip">
-                <span>Demo username</span>
+              <div className="login-credential-strip" aria-label="Demo credentials">
+                <span>Username</span>
                 <strong>{selectedLoginUser.username}</strong>
                 <span>Password</span>
                 <strong>{selectedLoginUser.password}</strong>
               </div>
             </div>
 
+            {/* RIGHT: Role picker */}
             <div className="login-role-column">
-              <div className="login-selected-preview">
+              <div className="login-selected-preview" aria-live="polite">
                 <span className="login-role-label">{selectedLoginUser.roleLabel}</span>
                 <strong>{selectedLoginUser.name}</strong>
                 <p>{selectedLoginUser.scope}</p>
@@ -730,30 +778,36 @@ function App() {
                     <strong>{selectedLoginUser.defaultTab === 'ops' ? 'Ops Control Room' : 'Agent Dashboard'}</strong>
                   </div>
                   <div>
-                    <span>Permission</span>
+                    <span>Permission Level</span>
                     <strong>
-                      {selectedLoginUser.role === 'management' ? 'Read-only' : selectedLoginUser.role === 'agent' ? 'Own dashboard' : 'Routed cases'}
+                      {selectedLoginUser.role === 'management' ? 'Read-only oversight' : selectedLoginUser.role === 'agent' ? 'Own dashboard only' : 'Routed cases only'}
                       <HelpDot text={selectedLoginUser.role === 'management' ? 'Management can review all cases and metrics, but cannot change case status.' : selectedLoginUser.role === 'agent' ? 'Agent view is scoped to the selected super agent dashboard.' : 'This role can act only on cases routed to its queue.'} />
                     </strong>
                   </div>
                 </div>
               </div>
 
-              <div className="login-role-grid">
-                {DEMO_USERS.filter(user => user.role !== 'admin').map(user => (
-                  <button
-                    key={user.id}
-                    className={`login-role-card ${loginRoleId === user.id ? 'active' : ''}`}
-                    onClick={() => handleLoginRoleChange(user.id)}
-                    type="button"
-                  >
-                    <span className="login-role-label">{user.roleLabel}</span>
-                    <span className="login-role-name">{user.name}</span>
-                    <span className="login-role-scope">
-                      {user.defaultTab === 'ops' ? 'Ops' : 'Agent'} <HelpDot text={user.scope} />
-                    </span>
-                  </button>
-                ))}
+              <div>
+                <p className="login-role-section-title">Choose a demo role to explore</p>
+                <div className="login-role-grid" role="listbox" aria-label="Demo roles">
+                  {DEMO_USERS.filter(user => user.role !== 'admin').map(user => (
+                    <button
+                      key={user.id}
+                      className={`login-role-card ${loginRoleId === user.id ? 'active' : ''}`}
+                      onClick={() => handleLoginRoleChange(user.id)}
+                      type="button"
+                      role="option"
+                      aria-selected={loginRoleId === user.id}
+                    >
+                      <span className="login-role-label">{user.roleLabel}</span>
+                      <span className="login-role-name">{user.name}</span>
+                      <span className="login-role-scope">
+                        {user.defaultTab === 'ops' ? '🖥 Ops View' : '📊 Agent View'}
+                        &nbsp;<HelpDot text={user.scope} />
+                      </span>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -765,82 +819,108 @@ function App() {
   return (
     <>
       <TooltipOverlay />
-      <header>
+      <header role="banner">
         <div className="header-brand-row">
+          {/* Logo */}
           <div className="logo-container">
-            <div className="logo-icon">Ω</div>
+            <div className="logo-icon" aria-hidden="true">Ω</div>
             <div>
               <h1 className="logo-text">SUPER-AGENT</h1>
-              <span className="logo-subtitle">
-                MULTI-PROVIDER COORDINATION PORTAL
-              </span>
+              <span className="logo-subtitle">Multi-Provider Coordination</span>
             </div>
           </div>
 
+          {/* Mobile: tools dropdown */}
           <div className="header-actions-mobile">
-            <button 
-              className="btn btn-secondary" 
+            <button
+              className="btn btn-secondary"
               onClick={() => setShowActionsDropdown(!showActionsDropdown)}
               aria-expanded={showActionsDropdown}
               aria-label="Toggle Actions Menu"
             >
-              ⚙️ Tools
+              ☰ Menu
             </button>
             {showActionsDropdown && (
-              <div className="glass-card header-dropdown-menu" onClick={e => e.stopPropagation()}>
+              <div className="header-dropdown-menu" role="menu" onClick={e => e.stopPropagation()}>
                 <div className="header-user-card mobile">
                   <span className="header-user-name">{currentUser.name}</span>
                   <span className="header-user-role">{currentUser.roleLabel}</span>
                 </div>
+                <button
+                  className="btn btn-secondary header-dropdown-btn"
+                  onClick={() => { toggleTheme(); setShowActionsDropdown(false); }}
+                  role="menuitem"
+                >
+                  {theme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode'}
+                </button>
                 {isManagement && (
-                  <button className="btn btn-secondary header-dropdown-btn" onClick={() => { setShowActionsDropdown(false); fetchValidationMetrics(); }}>
-                  Validation Metrics
+                  <button className="btn btn-secondary header-dropdown-btn" onClick={() => { setShowActionsDropdown(false); fetchValidationMetrics(); }} role="menuitem">
+                    📊 Validation Metrics
                   </button>
                 )}
-                <button className="btn btn-primary header-dropdown-btn" onClick={() => { setShowActionsDropdown(false); triggerSeed(); }} disabled={loading}>
-                  Reset / Seed Data
+                <button className="btn btn-primary header-dropdown-btn" onClick={() => { setShowActionsDropdown(false); triggerSeed(); }} disabled={loading} role="menuitem">
+                  {loading ? '⏳ Loading...' : '🔄 Reset / Seed Data'}
                 </button>
-                <button className="btn btn-secondary header-dropdown-btn" onClick={handleLogout}>
-                  Switch Role
+                <button className="btn btn-secondary header-dropdown-btn" onClick={handleLogout} role="menuitem">
+                  ↩ Switch Role
                 </button>
               </div>
             )}
           </div>
         </div>
 
-        <div className="view-toggle">
-          <button 
+        {/* Tab toggles — center */}
+        <div className="view-toggle" role="tablist" aria-label="Main navigation">
+          <button
             className={`toggle-btn ${activeTab === 'agent' ? 'active' : ''}`}
-            onClick={() => setActiveTab('agent')}
+            onClick={() => { setActiveTab('agent'); setMobileDetailOpen(false); }}
+            role="tab"
+            aria-selected={activeTab === 'agent'}
+            id="tab-agent"
           >
-            Agent Dashboard
+            📊 Agent Dashboard
           </button>
-          <button 
+          <button
             className={`toggle-btn ${activeTab === 'ops' ? 'active' : ''}`}
             onClick={() => currentUser.role !== 'agent' && setActiveTab('ops')}
             disabled={currentUser.role === 'agent'}
+            role="tab"
+            aria-selected={activeTab === 'ops'}
+            id="tab-ops"
+            title={currentUser.role === 'agent' ? 'Ops Control Room is not available for this role' : ''}
           >
-            Ops Control Room
+            🖥 Ops Control Room
           </button>
         </div>
+
+        {/* Desktop: right actions */}
         <div className="header-actions-desktop">
           <div className="header-user-card">
             <span className="header-user-name">{currentUser.name}</span>
             <span className="header-user-role">{currentUser.roleLabel}</span>
           </div>
+          <button
+            className="theme-toggle-btn"
+            onClick={toggleTheme}
+            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          >
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
           {isManagement && (
             <button className="btn btn-secondary" onClick={fetchValidationMetrics}>
-              Validation Metrics
+              📊 Metrics
             </button>
           )}
           <button className="btn btn-primary" onClick={triggerSeed} disabled={loading}>
-            Reset / Seed Data
+            {loading ? '⏳' : '🔄'} Reset Data
           </button>
           <button className="btn btn-secondary" onClick={handleLogout}>
-            Switch Role
+            ↩ Switch Role
           </button>
         </div>
       </header>
+
 
       <main className="main-content">
         {seedMessage && (
@@ -1002,7 +1082,7 @@ function App() {
 
         {/* Tab 1: Agent Dashboard */}
         {activeTab === 'agent' && (
-          <div className="agent-grid fade-in">
+          <div className="agent-grid fade-in" role="tabpanel" aria-labelledby="tab-agent">
             {/* Sidebar with Selector */}
             <div className="sidebar">
               {/* Mobile-only Agent Selector and Info Button */}
@@ -1245,7 +1325,7 @@ function App() {
                   <div className="balance-grid">
                     {/* Shared Cash Card */}
                     <div className="glass-card balance-card">
-                      <span className="balance-label">Shared Cash <HelpDot text="Physical cash box used when customers request cash-out. Shared across provider services." /></span>
+                      <span className="balance-label shared-cash-label">Shared Cash <HelpDot text="Physical cash box used when customers request cash-out. Shared across provider services." /></span>
                       <span className="balance-amount">
                         {agentOverview.shared_cash.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                         <span className="balance-currency">BDT</span>
@@ -1589,7 +1669,7 @@ function App() {
                         return (
                           <div key={i} className={`alert-card ${f.risk_level}`}>
                             <div className="alert-card-header">
-                              <span className="alert-provider" style={{ color: f.provider_id ? f.display_color : '#fff' }}>
+                              <span className="alert-provider" style={{ color: f.provider_id ? f.display_color : 'var(--color-shared-cash-text, #fff)' }}>
                                 {f.provider_name}
                               </span>
                               <span className={`alert-badge ${f.risk_level}`}>
@@ -1713,62 +1793,66 @@ function App() {
 
         {/* Tab 2: Ops Control Room (Cases) */}
         {activeTab === 'ops' && (
-          <div className="ops-grid fade-in">
+          <div className="ops-grid fade-in" role="tabpanel" aria-labelledby="tab-ops">
             <div>
               <div className="glass-card ops-header-card">
-                <h3 className="alert-panel-title">Operations Case Queue</h3>
-                {cases.length > 0 && (
-                  <div style={{ marginBottom: '1.25rem' }}>
-                    <div style={{ display: 'flex', height: '6px', borderRadius: '3px', overflow: 'hidden', background: 'rgba(255,255,255,0.05)', marginBottom: '0.5rem' }}>
-                      {(() => {
-                        const total = cases.length;
-                        const open = cases.filter(c => c.status === 'open').length;
-                        const ack = cases.filter(c => c.status === 'acknowledged').length;
-                        const esc = cases.filter(c => c.status === 'escalated').length;
-                        const res = cases.filter(c => c.status === 'resolved').length;
-                        
-                        return (
-                          <>
-                            <div style={{ width: `${(open/total)*100}%`, background: '#60A5FA' }} title={`Open: ${open}`} />
-                            <div style={{ width: `${(ack/total)*100}%`, background: '#F59E0B' }} title={`Acknowledged: ${ack}`} />
-                            <div style={{ width: `${(esc/total)*100}%`, background: '#F87171' }} title={`Escalated: ${esc}`} />
-                            <div style={{ width: `${(res/total)*100}%`, background: '#34D399' }} title={`Resolved: ${res}`} />
-                          </>
-                        );
-                      })()}
-                    </div>
-                    <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.7rem', color: 'var(--text-secondary)', flexWrap: 'wrap' }}>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                        <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#60A5FA' }}></span> Open ({cases.filter(c => c.status === 'open').length})
-                      </span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                        <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#F59E0B' }}></span> Ack ({cases.filter(c => c.status === 'acknowledged').length})
-                      </span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                        <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#F87171' }}></span> Esc ({cases.filter(c => c.status === 'escalated').length})
-                      </span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                        <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#34D399' }}></span> Res ({cases.filter(c => c.status === 'resolved').length})
-                      </span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.85rem' }}>
+                  <div>
+                    <h2 className="section-heading" style={{ marginBottom: 0 }}>🖥 Operations Case Queue</h2>
+                    <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+                      {cases.length} case{cases.length !== 1 ? 's' : ''} matching filters
+                    </p>
+                  </div>
+                  <div className="acting-as-container">
+                    <div className="acting-as-label">Signed In As</div>
+                    <div className="acting-as-session">
+                      <span>{actorName}</span>
+                      <strong>{currentUser.roleLabel}</strong>
                     </div>
                   </div>
-                )}
-                <div className="filter-bar">
-                  <div>
-                    <label className="filter-label">Status</label>
-                    <select className="filter-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+                </div>
+
+                {cases.length > 0 && (() => {
+                  const total = cases.length;
+                  const open = cases.filter(c => c.status === 'open').length;
+                  const ack  = cases.filter(c => c.status === 'acknowledged').length;
+                  const esc  = cases.filter(c => c.status === 'escalated').length;
+                  const res  = cases.filter(c => c.status === 'resolved').length;
+                  return (
+                    <div style={{ marginBottom: '0.85rem' }}>
+                      <div className="status-summary-bar" role="progressbar" aria-label="Case status distribution">
+                        <div className="status-bar-segment" style={{ width: `${(open/total)*100}%`, background: '#60A5FA' }} title={`Open: ${open}`} />
+                        <div className="status-bar-segment" style={{ width: `${(ack/total)*100}%`,  background: '#F59E0B' }} title={`Acknowledged: ${ack}`} />
+                        <div className="status-bar-segment" style={{ width: `${(esc/total)*100}%`,  background: '#F87171' }} title={`Escalated: ${esc}`} />
+                        <div className="status-bar-segment" style={{ width: `${(res/total)*100}%`,  background: '#34D399' }} title={`Resolved: ${res}`} />
+                      </div>
+                      <div className="status-legend" aria-label="Case counts by status">
+                        <span className="status-legend-item"><span className="status-legend-dot" style={{ background: '#60A5FA' }} />Open ({open})</span>
+                        <span className="status-legend-item"><span className="status-legend-dot" style={{ background: '#F59E0B' }} />Acknowledged ({ack})</span>
+                        <span className="status-legend-item"><span className="status-legend-dot" style={{ background: '#F87171' }} />Escalated ({esc})</span>
+                        <span className="status-legend-item"><span className="status-legend-dot" style={{ background: '#34D399' }} />Resolved ({res})</span>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                <div className="filter-bar" role="search" aria-label="Case filters">
+                  <div className="filter-group">
+                    <label className="filter-label" htmlFor="filter-status">Filter by Status</label>
+                    <select id="filter-status" className="filter-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
                       <option value="">All Statuses</option>
-                      <option value="open">Open</option>
-                      <option value="acknowledged">Acknowledged</option>
-                      <option value="escalated">Escalated</option>
-                      <option value="resolved">Resolved</option>
+                      <option value="open">🔵 Open</option>
+                      <option value="acknowledged">🟡 Acknowledged</option>
+                      <option value="escalated">🔴 Escalated</option>
+                      <option value="resolved">🟢 Resolved</option>
                     </select>
                   </div>
-                  <div>
-                    <label className="filter-label">Assigned Role</label>
-                    <select 
-                      className="filter-select" 
-                      value={filterRole} 
+                  <div className="filter-group">
+                    <label className="filter-label" htmlFor="filter-role">Filter by Role</label>
+                    <select
+                      id="filter-role"
+                      className="filter-select"
+                      value={filterRole}
                       onChange={e => setFilterRole(e.target.value)}
                       disabled={isOpsRestricted}
                     >
@@ -1776,7 +1860,7 @@ function App() {
                         <option value={currentUser.role}>{getRoleLabel(currentUser.role)}</option>
                       ) : (
                         <>
-                          <option value="">All Roles</option>
+                          <option value="">All Departments</option>
                           <option value="provider_ops">Provider Operations</option>
                           <option value="field_officer">Field Officer</option>
                           <option value="risk_analyst">Risk Analyst</option>
@@ -1784,16 +1868,9 @@ function App() {
                       )}
                     </select>
                   </div>
-
-                  <div className="acting-as-container">
-                    <div className="acting-as-label">Signed In</div>
-                    <div className="acting-as-session">
-                      <span>{actorName}</span>
-                      <strong>{currentUser.roleLabel}</strong>
-                    </div>
-                  </div>
                 </div>
               </div>
+
 
               {/* Loading state for cases */}
               {loading && cases.length === 0 && (
@@ -1813,10 +1890,16 @@ function App() {
                     <div 
                       key={c.id} 
                       className={`case-card ${selectedCaseId === c.id ? 'active' : ''}`}
-                      onClick={() => setSelectedCaseId(c.id)}
+                      onClick={() => {
+                        setSelectedCaseId(c.id);
+                        if (window.innerWidth <= 768) setMobileDetailOpen(true);
+                      }}
                       role="button"
                       tabIndex={0}
-                      onKeyDown={(e) => handleKeyActivate(e, () => setSelectedCaseId(c.id))}
+                      onKeyDown={(e) => handleKeyActivate(e, () => {
+                        setSelectedCaseId(c.id);
+                        if (window.innerWidth <= 768) setMobileDetailOpen(true);
+                      })}
                     >
                       <div className="case-card-info">
                         <div className="case-card-meta">
@@ -1847,7 +1930,19 @@ function App() {
             </div>
 
             {/* Right side: Selected Case Detail pane */}
-            <div>
+            {/* On mobile this becomes a full-screen slide-over */}
+            <div className={mobileDetailOpen ? 'detail-pane detail-pane--open' : 'detail-pane'}>
+              {/* Mobile back button — only visible when the detail pane is open on mobile */}
+              {mobileDetailOpen && (
+                <button
+                  className="mobile-detail-back-btn"
+                  onClick={() => setMobileDetailOpen(false)}
+                  aria-label="Back to case list"
+                >
+                  ← Back to Cases
+                </button>
+              )}
+
               {selectedCase ? (
                 isOpsRestricted && selectedCase.assigned_role !== currentUser.role ? (
                   <div className="glass-card details-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3.5rem 2rem', gap: '1rem', border: '1px solid rgba(239, 68, 68, 0.2)', textAlign: 'center' }}>

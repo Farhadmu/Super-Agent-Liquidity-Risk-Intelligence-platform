@@ -1,117 +1,42 @@
 {
-  "liquidity:A001:bKash:None:high:30": {
+  "liquidity:A001:bKash:None:high:6:0.6": {
     "en": "Depletion warning: High net burn rate detected for bKash. Wallet balance is dropping rapidly.",
     "bn": "📣 বর্তমান লেনদেনের ধারা অনুযায়ী কয়েক মিনিটের মধ্যে আপনার বিকাশ ই-মানি শেষ হয়ে যেতে পারে। নিরাপদে সেবা চালু রাখতে অতিরিক্ত ই-মানি টপ-আপ করার পরামর্শ দেওয়া হচ্ছে।",
-    "banglish": "Bhai, apnar bKash wallet e-money khub druto sesh hoye jacche. Seba chalu rakhte kindly bank app theke e-money refill korun."
+    "banglish": "Apnar bKash e-money balance druto komche. Approved provider operations channel diye top-up coordinate korun."
   },
-  "anomaly:A002:Shared Cash:near_identical_amounts:None:None": {
-    "en": "Alert: Detected cluster of near-identical cash-out amounts from a small group of accounts in short intervals.",
-    "bn": "📣 গত ১২ মিনিটে স্বাভাবিকের তুলনায় অনেক বেশি ক্যাশ-আউট হয়েছে। কয়েকটি লেনদেনের পরিমাণ একই এবং অল্প কয়েকটি অ্যাকাউন্ট থেকে বারবার অনুরোধ এসেছে। বড় অঙ্কের নগদ পুনরায় সরবরাহের আগে পর্যালোচনা করুন।",
-    "banglish": "Bhai, last 12 minute e pray eki amount er cash-out bar bar hocche. Kichu account identical transaction korche. High volume cash supply er age transaction check korun."
-  },
-  "liquidity:A001:Shared Cash:None:low:None": {
+  "liquidity:A002:Shared Cash:None:high:3:0.5": {
     "en": "Depletion warning: High cash depletion risk for Shared Cash pool box. Refill recommended.",
-    "bn": "📣 বর্তমান লেনদেনের ধারা অনুযায়ী আপনার ড্রয়ারের নগদ টাকা শেষ হয়ে যেতে পারে। সবচেয়ে বেশি চাপ আসছে বিকাশ ক্যাশ-আউট থেকে। ২০,০০০+ টাকা অতিরিক্ত নগদ রিফিল করুন।",
-    "banglish": "Apnar cash box e taka sesh hoye jabe. bKash cash-out pressure besi. Kindly bank standard agent refilling point theke cash box fill-up korun."
+    "bn": "📣 বর্তমান লেনদেনের ধারা অনুযায়ী আপনার ড্রয়ারের নগদ টাকা দ্রুত কমতে পারে। নিরাপদভাবে সেবা চালু রাখতে অনুমোদিত ফিল্ড সাপোর্টের মাধ্যমে নগদ সহায়তা সমন্বয় করুন।",
+    "banglish": "Apnar cash box e pressure beshi. Approved field support diye cash support coordinate korun."
   },
-  "liquidity:A001:bKash:None:high:6": {
-    "en": "Depletion warning: High net burn rate detected for bKash. Wallet balance is dropping rapidly.",
-    "bn": "📣 বর্তমান লেনদেনের ধারা অনুযায়ী কয়েক মিনিটের মধ্যে আপনার বিকাশ ই-মানি শেষ হয়ে যেতে পারে। নিরাপদে সেবা চালু রাখতে অতিরিক্ত ই-মানি টপ-আপ করার পরামর্শ দেওয়া হচ্ছে।",
-    "banglish": "Bhai, apnar bKash wallet e-money khub druto sesh hoye jacche. Seba chalu rakhte kindly bank app theke e-money refill korun."
-  },
-  "liquidity:A001:Nagad:None:low:None": {
-    "en": "Wallet balance warning: Feed updates lag detected or wallet balance is low.",
-    "bn": "⚠️ রকেট তথ্য সরবরাহে সাময়িক বিলম্ব হচ্ছে। সঠিক পূর্বাভাসের জন্য অপেক্ষা করা হচ্ছে, অনুগ্রহ করে সর্বশেষ ব্যাংক স্টেটমেন্ট দেখে সিদ্ধান্ত নিন।",
-    "banglish": "Rocket feed updates late hocche. Sothik information er jonno kindly bank state check kore balance confirm korun."
-  },
-  "liquidity:A001:Rocket:None:low:None": {
-    "en": "Wallet balance warning: Feed updates lag detected or wallet balance is low.",
-    "bn": "⚠️ রকেট তথ্য সরবরাহে সাময়িক বিলম্ব হচ্ছে। সঠিক পূর্বাভাসের জন্য অপেক্ষা করা হচ্ছে, অনুগ্রহ করে সর্বশেষ ব্যাংক স্টেটমেন্ট দেখে সিদ্ধান্ত নিন।",
-    "banglish": "Rocket feed updates late hocche. Sothik information er jonno kindly bank state check kore balance confirm korun."
-  },
-  "anomaly:A001:bKash:near_identical_amounts:None:None": {
-    "en": "Alert: Detected cluster of near-identical cash-out amounts from a small group of accounts in short intervals.",
-    "bn": "📣 গত ১২ মিনিটে স্বাভাবিকের তুলনায় অনেক বেশি ক্যাশ-আউট হয়েছে। কয়েকটি লেনদেনের পরিমাণ একই এবং অল্প কয়েকটি অ্যাকাউন্ট থেকে বারবার অনুরোধ এসেছে। বড় অঙ্কের নগদ পুনরায় সরবরাহের আগে পর্যালোচনা করুন।",
-    "banglish": "Bhai, last 12 minute e pray eki amount er cash-out bar bar hocche. Kichu account identical transaction korche. High volume cash supply er age transaction check korun."
-  },
-  "anomaly:A001:bKash:off_hours_activity:None:None": {
+  "anomaly:A002:bKash:repeated_counterparty:None:None:0.7": {
     "en": "Behavioral warning: Unusual transaction velocity or repeat transactional activity detected.",
     "bn": "📣 এই এজেন্টের লেনদেনে কিছু অস্বাভাবিক বৈশিষ্ট্য পাওয়া গিয়েছে যা পর্যালোচনার দাবি রাখে।",
     "banglish": "Agent transaction e unusual behavior pawa gese. Kichu suspicious repetition pattern match korche, kindly details track korun."
   },
-  "liquidity:A001:bKash:None:high:24": {
-    "en": "Depletion warning: High net burn rate detected for bKash. Wallet balance is dropping rapidly.",
-    "bn": "📣 বর্তমান লেনদেনের ধারা অনুযায়ী কয়েক মিনিটের মধ্যে আপনার বিকাশ ই-মানি শেষ হয়ে যেতে পারে। নিরাপদে সেবা চালু রাখতে অতিরিক্ত ই-মানি টপ-আপ করার পরামর্শ দেওয়া হচ্ছে।",
-    "banglish": "Bhai, apnar bKash wallet e-money khub druto sesh hoye jacche. Seba chalu rakhte kindly bank app theke e-money refill korun."
-  },
-  "liquidity:A002:Shared Cash:None:high:3": {
-    "en": "Depletion warning: High cash depletion risk for Shared Cash pool box. Refill recommended.",
-    "bn": "📣 বর্তমান লেনদেনের ধারা অনুযায়ী আপনার ড্রয়ারের নগদ টাকা শেষ হয়ে যেতে পারে। সবচেয়ে বেশি চাপ আসছে বিকাশ ক্যাশ-আউট থেকে। ২০,০০০+ টাকা অতিরিক্ত নগদ রিফিল করুন।",
-    "banglish": "Apnar cash box e taka sesh hoye jabe. bKash cash-out pressure besi. Kindly bank standard agent refilling point theke cash box fill-up korun."
-  },
-  "liquidity:A002:bKash:None:low:None": {
-    "en": "Depletion warning: High net burn rate detected for bKash. Wallet balance is dropping rapidly.",
-    "bn": "📣 বর্তমান লেনদেনের ধারা অনুযায়ী কয়েক মিনিটের মধ্যে আপনার বিকাশ ই-মানি শেষ হয়ে যেতে পারে। নিরাপদে সেবা চালু রাখতে অতিরিক্ত ই-মানি টপ-আপ করার পরামর্শ দেওয়া হচ্ছে।",
-    "banglish": "Bhai, apnar bKash wallet e-money khub druto sesh hoye jacche. Seba chalu rakhte kindly bank app theke e-money refill korun."
-  },
-  "liquidity:A002:Nagad:None:low:None": {
-    "en": "Wallet balance warning: Feed updates lag detected or wallet balance is low.",
-    "bn": "⚠️ রকেট তথ্য সরবরাহে সাময়িক বিলম্ব হচ্ছে। সঠিক পূর্বাভাসের জন্য অপেক্ষা করা হচ্ছে, অনুগ্রহ করে সর্বশেষ ব্যাংক স্টেটমেন্ট দেখে সিদ্ধান্ত নিন।",
-    "banglish": "Rocket feed updates late hocche. Sothik information er jonno kindly bank state check kore balance confirm korun."
-  },
-  "liquidity:A002:Rocket:None:low:None": {
-    "en": "Wallet balance warning: Feed updates lag detected or wallet balance is low.",
-    "bn": "⚠️ রকেট তথ্য সরবরাহে সাময়িক বিলম্ব হচ্ছে। সঠিক পূর্বাভাসের জন্য অপেক্ষা করা হচ্ছে, অনুগ্রহ করে সর্বশেষ ব্যাংক স্টেটমেন্ট দেখে সিদ্ধান্ত নিন।",
-    "banglish": "Rocket feed updates late hocche. Sothik information er jonno kindly bank state check kore balance confirm korun."
-  },
-  "anomaly:A002:bKash:repeated_counterparty:None:None": {
-    "en": "Behavioral warning: Unusual transaction velocity or repeat transactional activity detected.",
-    "bn": "📣 এই এজেন্টের লেনদেনে কিছু অস্বাভাবিক বৈশিষ্ট্য পাওয়া গিয়েছে যা পর্যালোচনার দাবি রাখে।",
-    "banglish": "Agent transaction e unusual behavior pawa gese. Kichu suspicious repetition pattern match korche, kindly details track korun."
-  },
-  "anomaly:A002:bKash:near_identical_amounts:None:None": {
+  "anomaly:A002:bKash:near_identical_amounts:None:None:0.76": {
     "en": "Alert: Detected cluster of near-identical cash-out amounts from a small group of accounts in short intervals.",
     "bn": "📣 গত ১২ মিনিটে স্বাভাবিকের তুলনায় অনেক বেশি ক্যাশ-আউট হয়েছে। কয়েকটি লেনদেনের পরিমাণ একই এবং অল্প কয়েকটি অ্যাকাউন্ট থেকে বারবার অনুরোধ এসেছে। বড় অঙ্কের নগদ পুনরায় সরবরাহের আগে পর্যালোচনা করুন।",
     "banglish": "Bhai, last 12 minute e pray eki amount er cash-out bar bar hocche. Kichu account identical transaction korche. High volume cash supply er age transaction check korun."
   },
-  "liquidity:A004:Shared Cash:None:low:None": {
+  "liquidity:A002:Shared Cash:None:high:3:0.6": {
     "en": "Depletion warning: High cash depletion risk for Shared Cash pool box. Refill recommended.",
-    "bn": "📣 বর্তমান লেনদেনের ধারা অনুযায়ী আপনার ড্রয়ারের নগদ টাকা শেষ হয়ে যেতে পারে। সবচেয়ে বেশি চাপ আসছে বিকাশ ক্যাশ-আউট থেকে। ২০,০০০+ টাকা অতিরিক্ত নগদ রিফিল করুন।",
-    "banglish": "Apnar cash box e taka sesh hoye jabe. bKash cash-out pressure besi. Kindly bank standard agent refilling point theke cash box fill-up korun."
+    "bn": "📣 বর্তমান লেনদেনের ধারা অনুযায়ী বিকেল ৫টা ২০ মিনিটের মধ্যে আপনার নগদ টাকা শেষ হয়ে যেতে পারে। সবচেয়ে বেশি চাপ আসছে বিকাশ ক্যাশ-আউট থেকে। নিরাপদভাবে সেবা চালু রাখতে কমপক্ষে ২০,০০০ টাকা অতিরিক্ত নগদ ব্যবস্থা করার পরামর্শ দেওয়া হচ্ছে।",
+    "banglish": "Apnar cash box e pressure beshi. Approved field support diye cash support coordinate korun."
   },
-  "liquidity:A004:bKash:None:low:424": {
+  "liquidity:A004:bKash:None:medium:337:0.25": {
     "en": "Depletion warning: High net burn rate detected for bKash. Wallet balance is dropping rapidly.",
     "bn": "📣 বর্তমান লেনদেনের ধারা অনুযায়ী কয়েক মিনিটের মধ্যে আপনার বিকাশ ই-মানি শেষ হয়ে যেতে পারে। নিরাপদে সেবা চালু রাখতে অতিরিক্ত ই-মানি টপ-আপ করার পরামর্শ দেওয়া হচ্ছে।",
-    "banglish": "Bhai, apnar bKash wallet e-money khub druto sesh hoye jacche. Seba chalu rakhte kindly bank app theke e-money refill korun."
+    "banglish": "Apnar bKash e-money balance druto komche. Approved provider operations channel diye top-up coordinate korun."
   },
-  "liquidity:A004:Nagad:None:low:None": {
-    "en": "Wallet balance warning: Feed updates lag detected or wallet balance is low.",
-    "bn": "⚠️ রকেট তথ্য সরবরাহে সাময়িক বিলম্ব হচ্ছে। সঠিক পূর্বাভাসের জন্য অপেক্ষা করা হচ্ছে, অনুগ্রহ করে সর্বশেষ ব্যাংক স্টেটমেন্ট দেখে সিদ্ধান্ত নিন।",
-    "banglish": "Rocket feed updates late hocche. Sothik information er jonno kindly bank state check kore balance confirm korun."
+  "liquidity:AG999:Rocket:None:medium:20:0.9": {
+    "en": "Wallet balance warning: Provider balance is under pressure. Keep balances separate and coordinate through the approved provider operations channel.",
+    "bn": "⚠️ এই প্রোভাইডারের ব্যালেন্সে চাপ দেখা যাচ্ছে। ব্যালেন্স আলাদা রাখুন এবং অনুমোদিত প্রোভাইডার অপারেশনস চ্যানেলের মাধ্যমে সমন্বয় করুন।",
+    "banglish": "Ei provider balance e pressure dekha jacche. Balance alada rekhe approved provider ops channel diye coordinate korun."
   },
-  "liquidity:A004:Rocket:None:low:None": {
-    "en": "Wallet balance warning: Feed updates lag detected or wallet balance is low.",
-    "bn": "⚠️ রকেট তথ্য সরবরাহে সাময়িক বিলম্ব হচ্ছে। সঠিক পূর্বাভাসের জন্য অপেক্ষা করা হচ্ছে, অনুগ্রহ করে সর্বশেষ ব্যাংক স্টেটমেন্ট দেখে সিদ্ধান্ত নিন।",
-    "banglish": "Rocket feed updates late hocche. Sothik information er jonno kindly bank state check kore balance confirm korun."
-  },
-  "liquidity:A003:Shared Cash:None:low:None": {
-    "en": "Depletion warning: High cash depletion risk for Shared Cash pool box. Refill recommended.",
-    "bn": "📣 বর্তমান লেনদেনের ধারা অনুযায়ী আপনার ড্রয়ারের নগদ টাকা শেষ হয়ে যেতে পারে। সবচেয়ে বেশি চাপ আসছে বিকাশ ক্যাশ-আউট থেকে। ২০,০০০+ টাকা অতিরিক্ত নগদ রিফিল করুন।",
-    "banglish": "Apnar cash box e taka sesh hoye jabe. bKash cash-out pressure besi. Kindly bank standard agent refilling point theke cash box fill-up korun."
-  },
-  "liquidity:A003:bKash:None:low:None": {
-    "en": "Depletion warning: High net burn rate detected for bKash. Wallet balance is dropping rapidly.",
-    "bn": "📣 বর্তমান লেনদেনের ধারা অনুযায়ী কয়েক মিনিটের মধ্যে আপনার বিকাশ ই-মানি শেষ হয়ে যেতে পারে। নিরাপদে সেবা চালু রাখতে অতিরিক্ত ই-মানি টপ-আপ করার পরামর্শ দেওয়া হচ্ছে।",
-    "banglish": "Bhai, apnar bKash wallet e-money khub druto sesh hoye jacche. Seba chalu rakhte kindly bank app theke e-money refill korun."
-  },
-  "liquidity:A003:Nagad:None:low:None": {
-    "en": "Wallet balance warning: Feed updates lag detected or wallet balance is low.",
-    "bn": "⚠️ রকেট তথ্য সরবরাহে সাময়িক বিলম্ব হচ্ছে। সঠিক পূর্বাভাসের জন্য অপেক্ষা করা হচ্ছে, অনুগ্রহ করে সর্বশেষ ব্যাংক স্টেটমেন্ট দেখে সিদ্ধান্ত নিন।",
-    "banglish": "Rocket feed updates late hocche. Sothik information er jonno kindly bank state check kore balance confirm korun."
-  },
-  "liquidity:A003:Rocket:None:low:None": {
-    "en": "Wallet balance warning: Feed updates lag detected or wallet balance is low.",
-    "bn": "⚠️ রকেট তথ্য সরবরাহে সাময়িক বিলম্ব হচ্ছে। সঠিক পূর্বাভাসের জন্য অপেক্ষা করা হচ্ছে, অনুগ্রহ করে সর্বশেষ ব্যাংক স্টেটমেন্ট দেখে সিদ্ধান্ত নিন।",
-    "banglish": "Rocket feed updates late hocche. Sothik information er jonno kindly bank state check kore balance confirm korun."
+  "liquidity:AG111:Rocket:None:medium:25:0.95": {
+    "en": "Wallet balance warning: Provider balance is under pressure. Keep balances separate and coordinate through the approved provider operations channel.",
+    "bn": "⚠️ এই প্রোভাইডারের ব্যালেন্সে চাপ দেখা যাচ্ছে। ব্যালেন্স আলাদা রাখুন এবং অনুমোদিত প্রোভাইডার অপারেশনস চ্যানেলের মাধ্যমে সমন্বয় করুন।",
+    "banglish": "Ei provider balance e pressure dekha jacche. Balance alada rekhe approved provider ops channel diye coordinate korun."
   }
 }

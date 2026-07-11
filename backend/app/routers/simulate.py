@@ -106,7 +106,7 @@ def apply_custom_scenario(payload: CustomScenarioInput, db: Session = Depends(ge
     # 3. Trigger IsolationForest anomaly evaluation on injected transactions
     flagged_count = 0
     for tx in injected_txs:
-        flag = check_transaction_for_anomaly(db, tx.id)
+        flag = check_transaction_for_anomaly(db, tx)
         if flag:
             flagged_count += 1
             recommended_action = f"Review custom transaction pattern. Verify identity for counterparty {payload.anomaly_counterparty}."

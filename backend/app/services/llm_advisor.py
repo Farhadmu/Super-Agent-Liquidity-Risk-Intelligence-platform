@@ -125,7 +125,7 @@ def clean_json_response(raw_text):
     return json.loads(text.strip())
 
 def call_gemini(prompt, api_key):
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key={api_key}"
     headers = {"Content-Type": "application/json"}
     payload = {
         "contents": [{
@@ -145,7 +145,7 @@ def call_gemini(prompt, api_key):
         method="POST"
     )
     
-    with urllib.request.urlopen(req, timeout=4) as response:
+    with urllib.request.urlopen(req, timeout=20) as response:
         res = json.loads(response.read().decode("utf-8"))
         text = res["candidates"][0]["content"]["parts"][0]["text"]
         return clean_json_response(text)
@@ -174,7 +174,7 @@ def call_openai(prompt, api_key):
         method="POST"
     )
     
-    with urllib.request.urlopen(req, timeout=4) as response:
+    with urllib.request.urlopen(req, timeout=20) as response:
         res = json.loads(response.read().decode("utf-8"))
         text = res["choices"][0]["message"]["content"]
         return json.loads(text)

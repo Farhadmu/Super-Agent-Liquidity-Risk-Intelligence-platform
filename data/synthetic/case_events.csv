@@ -1,11 +1,11 @@
 id,case_id,event_type,actor_role,note,created_at
-1,1,created,system,Alert generated: Routed to provider_ops.,2026-07-11 11:39:43.961104
-2,2,created,system,Alert generated: Routed to field_officer.,2026-07-11 11:39:43.972172
-3,3,created,system,Alert generated: Routed to risk_analyst.,2026-07-11 11:39:43.978444
-4,4,created,system,Alert generated: Routed to risk_analyst.,2026-07-11 11:39:43.983250
-5,5,created,system,Alert generated: Routed to risk_analyst.,2026-07-11 11:39:44.012368
-6,6,created,system,Alert generated: Routed to risk_analyst.,2026-07-11 11:39:44.016201
-7,7,created,system,Alert generated: Routed to risk_analyst.,2026-07-11 11:39:44.019634
-8,8,created,system,Alert generated: Routed to provider_ops.,2026-07-11 10:39:43.403951
-9,8,acknowledged,provider_ops,Case acknowledged by Officer Tanvir. Checking balance limits.,2026-07-11 10:54:43.403951
-10,8,note,provider_ops,"Distributor notified, waiting for bank confirmation.",2026-07-11 11:19:43.403951
+1,1,created,system,Alert generated: Routed to provider_ops.,2026-07-11 14:25:22.641774
+2,2,created,system,Alert generated: Routed to field_officer.,2026-07-11 14:25:22.648090
+3,3,created,system,Alert generated: Routed to risk_analyst.,2026-07-11 14:25:22.651043
+4,4,created,system,Alert generated: Routed to risk_analyst.,2026-07-11 14:25:22.654889
+5,5,created,system,Alert generated: Routed to risk_analyst.,2026-07-11 14:25:22.657862
+6,6,created,system,Alert generated: Routed to risk_analyst.,2026-07-11 14:25:22.660388
+7,7,created,system,Alert generated: Routed to risk_analyst.,2026-07-11 14:25:22.662819
+8,8,created,system,Alert generated: Routed to provider_ops.,2026-07-11 13:25:22.263622
+9,8,acknowledged,provider_ops,Case acknowledged by Officer Tanvir. Checking balance limits.,2026-07-11 13:40:22.263622
+10,8,note,provider_ops,"Distributor notified, waiting for bank confirmation.",2026-07-11 14:05:22.263622
