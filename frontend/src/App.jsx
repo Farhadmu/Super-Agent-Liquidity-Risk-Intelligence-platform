@@ -12,6 +12,26 @@ const getInitialTheme = () => {
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
+// Global tooltip handlers to avoid nested component unmounting on state change
+const globalTooltip = {
+  show: () => {},
+  hide: () => {}
+};
+
+const HelpDot = ({ text }) => (
+  <span
+    className="help-dot"
+    tabIndex={0}
+    aria-label={text}
+    onMouseEnter={e => globalTooltip.show(text, e.currentTarget)}
+    onFocus={e => globalTooltip.show(text, e.currentTarget)}
+    onMouseLeave={() => globalTooltip.hide()}
+    onBlur={() => globalTooltip.hide()}
+  >
+    ?
+  </span>
+);
+
 const AGENTS_LIST = [
   { id: 1, code: 'A001', name: 'Sajib Telecom (Dhaka)' },
   { id: 2, code: 'A002', name: 'Mayer Doa Enterprise (Chittagong)' },
@@ -303,19 +323,9 @@ function App() {
 
   const hideTooltip = () => setTooltip(null);
 
-  const HelpDot = ({ text }) => (
-    <span
-      className="help-dot"
-      tabIndex={0}
-      aria-label={text}
-      onMouseEnter={e => showTooltip(text, e.currentTarget)}
-      onFocus={e => showTooltip(text, e.currentTarget)}
-      onMouseLeave={hideTooltip}
-      onBlur={hideTooltip}
-    >
-      ?
-    </span>
-  );
+  // Bind local functions to global tooltip handlers to preserve references on rerenders
+  globalTooltip.show = showTooltip;
+  globalTooltip.hide = hideTooltip;
 
   const TooltipOverlay = () => {
     if (!tooltip) return null;
