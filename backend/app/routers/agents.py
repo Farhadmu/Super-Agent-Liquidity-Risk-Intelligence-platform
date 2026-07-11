@@ -5,6 +5,7 @@ from typing import List, Dict, Any
 from backend.app.models.database import get_db
 from backend.app.models.schemas import Agent, Provider, ProviderBalance, CashPosition, AnomalyFlag
 from backend.app.services.liquidity import compute_liquidity_forecast
+from backend.app.services.llm_advisor import generate_trilingual_alerts
 
 router = APIRouter(prefix="/agents", tags=["agents"])
 
@@ -64,6 +65,16 @@ def get_agent_liquidity_forecast(agent_id: int, db: Session = Depends(get_db)):
 
     # 1. Shared cash pool forecast
     cash_forecast = compute_liquidity_forecast(db, agent_id, provider_id=None)
+    
+    cash_details = {
+        "agent_code": agent.agent_code,
+        "provider_name": "Shared Cash",
+        "current_balance": cash_forecast["current_balance"],
+        "eta_minutes": cash_forecast["eta_minutes"],
+        "risk_level": cash_forecast["risk_level"]
+    }
+    cash_alerts = generate_trilingual_alerts("liquidity", cash_details)
+    
     forecasts.append({
         "provider_id": None,
         "provider_name": "Shared Cash",
@@ -71,7 +82,9 @@ def get_agent_liquidity_forecast(agent_id: int, db: Session = Depends(get_db)):
         "risk_level": cash_forecast["risk_level"],
         "eta_minutes": cash_forecast["eta_minutes"],
         "confidence": cash_forecast["confidence"],
-        "reason": cash_forecast["reason"],
+        "reason_en": cash_alerts.get("en", cash_forecast["reason"]),
+        "reason_bn": cash_alerts.get("bn", ""),
+        "reason_banglish": cash_alerts.get("banglish", ""),
         "current_balance": cash_forecast["current_balance"]
     })
 
@@ -84,6 +97,16 @@ def get_agent_liquidity_forecast(agent_id: int, db: Session = Depends(get_db)):
             data_lag = True
             
         p_forecast = compute_liquidity_forecast(db, agent_id, provider_id=p.id, data_lag_simulation=data_lag)
+        
+        p_details = {
+            "agent_code": agent.agent_code,
+            "provider_name": p.name,
+            "current_balance": p_forecast["current_balance"],
+            "eta_minutes": p_forecast["eta_minutes"],
+            "risk_level": p_forecast["risk_level"]
+        }
+        p_alerts = generate_trilingual_alerts("liquidity", p_details)
+        
         forecasts.append({
             "provider_id": p.id,
             "provider_name": p.name,
@@ -91,7 +114,9 @@ def get_agent_liquidity_forecast(agent_id: int, db: Session = Depends(get_db)):
             "risk_level": p_forecast["risk_level"],
             "eta_minutes": p_forecast["eta_minutes"],
             "confidence": p_forecast["confidence"],
-            "reason": p_forecast["reason"],
+            "reason_en": p_alerts.get("en", p_forecast["reason"]),
+            "reason_bn": p_alerts.get("bn", ""),
+            "reason_banglish": p_alerts.get("banglish", ""),
             "current_balance": p_forecast["current_balance"]
         })
 
@@ -114,15 +139,30 @@ def get_agent_anomalies(agent_id: int, db: Session = Depends(get_db)):
     res = []
     for f in flags:
         provider = db.query(Provider).filter(Provider.id == f.provider_id).first()
+        p_name = provider.name if provider else "Unknown"
+        
+        anomaly_details = {
+            "agent_code": agent.agent_code,
+            "provider_name": p_name,
+            "pattern_type": f.pattern_type,
+            "anomaly_score": float(f.anomaly_score),
+            "confidence": float(f.confidence),
+            "evidence": f.evidence
+        }
+        anomaly_alerts = generate_trilingual_alerts("anomaly", anomaly_details)
+        
         res.append({
             "id": f.id,
             "provider_id": f.provider_id,
-            "provider_name": provider.name if provider else "Unknown",
+            "provider_name": p_name,
             "display_color": provider.display_color if provider else "#4B5563",
             "pattern_type": f.pattern_type,
             "anomaly_score": float(f.anomaly_score),
             "evidence": f.evidence,
             "confidence": float(f.confidence),
+            "reason_en": anomaly_alerts.get("en", ""),
+            "reason_bn": anomaly_alerts.get("bn", ""),
+            "reason_banglish": anomaly_alerts.get("banglish", ""),
             "created_at": f.created_at.isoformat()
         })
     return res

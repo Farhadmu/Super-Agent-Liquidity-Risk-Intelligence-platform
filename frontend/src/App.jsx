@@ -742,24 +742,15 @@ function App() {
                               </div>
                             )}
 
-                            {/* Bilingual Bangla alert for Scenario A or B */}
+                            {/* Trilingual AI Alerts (English, Bangla, Banglish) */}
                             {hasRisk && (
                               <div className="alert-msg-bilingual">
-                                <span className="alert-msg-en">{f.reason}</span>
-                                {f.provider_name === 'bKash' && f.risk_level === 'high' && (
-                                  <span className="alert-msg-bn">
-                                    📣 বর্তমান লেনদেনের ধারা অনুযায়ী কয়েক মিনিটের মধ্যে আপনার বিকাশ ই-মানি শেষ হয়ে যেতে পারে। নিরাপদে সেবা চালু রাখতে অতিরিক্ত ই-মানি টপ-আপ করার পরামর্শ দেওয়া হচ্ছে।
-                                  </span>
+                                <span className="alert-msg-en">🇬🇧 {f.reason_en}</span>
+                                {f.reason_bn && (
+                                  <span className="alert-msg-bn">🇧🇩 {f.reason_bn}</span>
                                 )}
-                                {f.provider_name === 'Shared Cash' && f.risk_level === 'high' && (
-                                  <span className="alert-msg-bn">
-                                    📣 বর্তমান লেনদেনের ধারা অনুযায়ী আপনার ড্রয়ারের নগদ টাকা শেষ হয়ে যেতে পারে। সবচেয়ে বেশি চাপ আসছে বিকাশ ক্যাশ-আউট থেকে। ২০,০০০+ টাকা অতিরিক্ত নগদ রিফিল করুন।
-                                  </span>
-                                )}
-                                {f.confidence < 0.3 && (
-                                  <span className="alert-msg-bn">
-                                    ⚠️ রকেট তথ্য সরবরাহে সাময়িক বিলম্ব হচ্ছে। সঠিক পূর্বাভাসের জন্য অপেক্ষা করা হচ্ছে, অনুগ্রহ করে সর্বশেষ ব্যাংক স্টেটমেন্ট দেখে সিদ্ধান্ত নিন।
-                                  </span>
+                                {f.reason_banglish && (
+                                  <span className="alert-msg-banglish">🗣️ {f.reason_banglish}</span>
                                 )}
                               </div>
                             )}
@@ -824,17 +815,16 @@ function App() {
                             </p>
                           </div>
 
-                          {/* Bilingual Bangla Warning for Scenario B */}
-                          {a.pattern_type === 'near_identical_amounts' && (
-                            <div className="alert-msg-bilingual" style={{ borderLeftColor: 'var(--color-danger)' }}>
-                              <span className="alert-msg-en">
-                                Alert: Detected cluster of near-identical cash-out amounts from a small group of accounts.
-                              </span>
-                              <span className="alert-msg-bn">
-                                📣 গত ১২ মিনিটে স্বাভাবিকের তুলনায় অনেক বেশি ক্যাশ-আউট হয়েছে। কয়েকটি লেনদেনের পরিমাণ একই এবং অল্প কয়েকটি অ্যাকাউন্ট থেকে বারবার অনুরোধ এসেছে। বড় অঙ্কের নগদ পুনরায় সরবরাহের আগে পর্যালোচনা করুন।
-                              </span>
-                            </div>
-                          )}
+                          {/* Trilingual AI Alerts (English, Bangla, Banglish) */}
+                          <div className="alert-msg-bilingual" style={{ borderLeftColor: 'var(--color-danger)' }}>
+                            <span className="alert-msg-en">🇬🇧 {a.reason_en}</span>
+                            {a.reason_bn && (
+                              <span className="alert-msg-bn">🇧🇩 {a.reason_bn}</span>
+                            )}
+                            {a.reason_banglish && (
+                              <span className="alert-msg-banglish">🗣️ {a.reason_banglish}</span>
+                            )}
+                          </div>
 
                           <div className="details-section-title compact">Evidence Parameters</div>
                           <div className="evidence-grid">
