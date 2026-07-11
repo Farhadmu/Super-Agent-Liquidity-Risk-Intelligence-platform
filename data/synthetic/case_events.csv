@@ -1,0 +1,27 @@
+id,case_id,event_type,actor_role,note,created_at
+1,1,created,system,Alert generated: Routed to provider_ops.,2026-07-11 03:52:50.437532
+2,2,created,system,Alert generated: Routed to field_officer.,2026-07-11 03:52:50.448479
+3,3,created,system,Alert generated: Routed to risk_analyst.,2026-07-11 03:52:50.453577
+4,4,created,system,Alert generated: Routed to risk_analyst.,2026-07-11 03:52:50.457825
+5,5,created,system,Alert generated: Routed to risk_analyst.,2026-07-11 03:52:50.462371
+6,6,created,system,Alert generated: Routed to risk_analyst.,2026-07-11 03:52:50.466820
+7,7,created,system,Alert generated: Routed to risk_analyst.,2026-07-11 03:52:50.470804
+8,8,created,system,Alert generated: Routed to risk_analyst.,2026-07-11 03:52:50.475304
+9,9,created,system,Alert generated: Routed to risk_analyst.,2026-07-11 03:52:50.479031
+10,10,created,system,Alert generated: Routed to risk_analyst.,2026-07-11 03:52:50.483026
+11,11,created,system,Alert generated: Routed to risk_analyst.,2026-07-11 03:52:50.487141
+12,12,created,system,Alert generated: Routed to risk_analyst.,2026-07-11 03:52:50.491371
+13,13,created,system,Alert generated: Routed to risk_analyst.,2026-07-11 03:52:50.495647
+14,14,created,system,Alert generated: Routed to risk_analyst.,2026-07-11 03:52:50.499721
+15,15,created,system,Alert generated: Routed to risk_analyst.,2026-07-11 03:52:50.503572
+16,16,created,system,Alert generated: Routed to risk_analyst.,2026-07-11 03:52:50.507335
+17,17,created,system,Alert generated: Routed to risk_analyst.,2026-07-11 03:52:50.511492
+18,18,created,system,Alert generated: Routed to risk_analyst.,2026-07-11 03:52:50.515389
+19,19,created,system,Alert generated: Routed to risk_analyst.,2026-07-11 03:52:50.518733
+20,20,created,system,Alert generated: Routed to risk_analyst.,2026-07-11 03:52:50.523872
+21,21,created,system,Alert generated: Routed to risk_analyst.,2026-07-11 03:52:50.575215
+22,22,created,system,Alert generated: Routed to risk_analyst.,2026-07-11 03:52:50.582687
+23,23,created,system,Alert generated: Routed to risk_analyst.,2026-07-11 03:52:50.590752
+24,24,created,system,Alert generated: Routed to provider_ops.,2026-07-11 03:52:50.599933
+25,24,acknowledged,provider_ops,Case acknowledged by Officer Tanvir. Checking balance limits.,2026-07-11 03:07:49.716189
+26,24,note,provider_ops,"Distributor notified, waiting for bank confirmation.",2026-07-11 03:32:49.716189
