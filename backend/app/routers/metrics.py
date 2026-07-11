@@ -10,20 +10,26 @@ router = APIRouter(prefix="/metrics", tags=["metrics"])
 
 @router.get("/validation")
 def get_validation_metrics(db: Session = Depends(get_db)):
-    # 1. Anomaly Precision & Recall on Seeded Scenario B
+    from datetime import datetime, timedelta
+    
+    # 1. Anomaly Precision & Recall on Seeded Scenario B (Test Window: last 2 hours)
     # Suspect transactions have counterparty_ref == 'CUST_SUSPECT'
-    # Find all transactions created in the last 2 hours
-    # Count how many suspect transactions exist (ground truth positives)
+    # Count how many suspect transactions exist in the test scenario (ground truth positives)
     all_suspect_txs = db.query(Transaction).filter(
         Transaction.counterparty_ref == 'CUST_SUSPECT'
     ).all()
     suspect_ids = {t.id for t in all_suspect_txs}
     
+    # We define the evaluation window as the last 2 hours where the demo scenario runs
+    two_hours_ago = datetime.now() - timedelta(hours=2)
+    recent_txs = db.query(Transaction).filter(Transaction.created_at >= two_hours_ago).all()
+    recent_tx_ids = {t.id for t in recent_txs}
+    
     # Check flags in anomaly_flags table
     all_flags = db.query(AnomalyFlag).all()
     
     tp = 0
-    fp = 0
+    fp_recent = 0
     
     for flag in all_flags:
         evidence = flag.evidence or {}
@@ -31,22 +37,27 @@ def get_validation_metrics(db: Session = Depends(get_db)):
         if tx_id:
             if tx_id in suspect_ids:
                 tp += 1
-            else:
-                fp += 1
+            elif tx_id in recent_tx_ids:
+                fp_recent += 1
 
     fn = len(suspect_ids) - tp
-    precision = tp / (tp + fp) if (tp + fp) > 0 else 1.0
+    precision = tp / (tp + fp_recent) if (tp + fp_recent) > 0 else 1.0
     recall = tp / (tp + fn) if (tp + fn) > 0 else 1.0
 
-    # 2. False Positive Rate on baseline
-    # Since we train IsolationForest with contamination=0.03, we expect ~3% false positive rate.
-    # Total historical baseline transactions (created more than 2 hours ago)
+    # 2. False Positive Rate on baseline (Traffic before the 2-hour test scenario window)
     baseline_count = db.query(func.count(Transaction.id)).filter(
-        Transaction.counterparty_ref != 'CUST_SUSPECT'
+        Transaction.created_at < two_hours_ago
     ).scalar() or 1
     
-    # Calculate FPR
-    fpr = fp / baseline_count if baseline_count > 0 else 0.0
+    # Baseline false positives are flags on baseline transactions
+    baseline_fp = 0
+    for flag in all_flags:
+        evidence = flag.evidence or {}
+        tx_id = evidence.get("transaction_id")
+        if tx_id and tx_id not in recent_tx_ids:
+            baseline_fp += 1
+            
+    fpr = baseline_fp / baseline_count if baseline_count > 0 else 0.0
 
     # 3. Shortage Detection Lead Time (Scenario A: A001 bKash)
     scenario_agent = db.query(Agent).filter(Agent.agent_code == "A001").first()
@@ -90,7 +101,7 @@ def get_validation_metrics(db: Session = Depends(get_db)):
     return {
         "anomaly_detection": {
             "true_positives": tp,
-            "false_positives": fp,
+            "false_positives": fp_recent,
             "false_negatives": fn,
             "precision": round(precision, 4),
             "recall": round(recall, 4),
