@@ -6,7 +6,10 @@ import numpy as np
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-sys.path.append("/Applications/XAMPP/xamppfiles/htdocs/sust hackathon")
+# Append repository root dynamically
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if ROOT_DIR not in sys.path:
+    sys.path.append(ROOT_DIR)
 
 from sqlalchemy import desc
 from backend.app.models.database import SessionLocal, Base, engine

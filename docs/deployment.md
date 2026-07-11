@@ -31,6 +31,8 @@ services:
         value: ""   # Optional fallback API key
       - key: DATABASE_URL
         value: "sqlite:///./production.db" # Default fallback database
+      - key: PYTHONUNBUFFERED
+        value: "1"  # Force unbuffered logging
 
   # 2. React Frontend Static Site
   - type: web
@@ -78,6 +80,8 @@ If you prefer to configure the services manually on Render, follow the instructi
    - `GEMINI_API_KEY`: *(Optional)* Your Google Gemini API Key.
    - `CHATGPT_API_KEY`: *(Optional)* Your OpenAI API Key.
    - `PYTHON_VERSION`: `3.11.5` (or higher)
+   - `DATABASE_URL`: `sqlite:///./production.db` (enforces local SQLite fallback database file to prevent PostgreSQL connection errors)
+   - `PYTHONUNBUFFERED`: `1` (forces unbuffered logging so you see live startup reports instantly)
 5. Click **Create Web Service**.
 
 > [!NOTE]
