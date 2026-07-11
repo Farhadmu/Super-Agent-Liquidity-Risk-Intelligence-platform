@@ -2,6 +2,46 @@ import React, { useState, useEffect } from 'react';
 
 const API_BASE = 'http://localhost:8080';
 
+const getTrendData = (agentCode) => {
+  if (agentCode === 'A001') {
+    return [
+      { label: '60m ago', cash: 150000, bkash: 45000, nagad: 80000, rocket: 60000 },
+      { label: '48m ago', cash: 150000, bkash: 37000, nagad: 80000, rocket: 60000 },
+      { label: '36m ago', cash: 150000, bkash: 29000, nagad: 80000, rocket: 60000 },
+      { label: '24m ago', cash: 150000, bkash: 21000, nagad: 80000, rocket: 60000 },
+      { label: '12m ago', cash: 150000, bkash: 13000, nagad: 80000, rocket: 60000 },
+      { label: 'Now',     cash: 150000, bkash: 5000,  nagad: 80000, rocket: 60000 }
+    ];
+  } else if (agentCode === 'A002') {
+    return [
+      { label: '60m ago', cash: 80000, bkash: 120000, nagad: 90000, rocket: 40000 },
+      { label: '48m ago', cash: 65000, bkash: 120000, nagad: 90000, rocket: 40000 },
+      { label: '36m ago', cash: 50000, bkash: 120000, nagad: 90000, rocket: 40000 },
+      { label: '24m ago', cash: 35000, bkash: 120000, nagad: 90000, rocket: 40000 },
+      { label: '12m ago', cash: 20000, bkash: 120000, nagad: 90000, rocket: 40000 },
+      { label: 'Now',     cash: 8000,  bkash: 120000, nagad: 90000, rocket: 40000 }
+    ];
+  } else if (agentCode === 'A003') {
+    return [
+      { label: '60m ago', cash: 100000, bkash: 40000, nagad: 45000, rocket: 80000 },
+      { label: '48m ago', cash: 100000, bkash: 40000, nagad: 45000, rocket: 80000 },
+      { label: '36m ago', cash: 100000, bkash: 40000, nagad: 45000, rocket: 80000 },
+      { label: '24m ago', cash: 100000, bkash: 40000, nagad: 45000, rocket: 80000 },
+      { label: '12m ago', cash: 100000, bkash: 40000, nagad: 45000, rocket: 80000 },
+      { label: 'Now',     cash: 100000, bkash: 40000, nagad: 45000, rocket: 80000 }
+    ];
+  } else {
+    return [
+      { label: '60m ago', cash: 121000, bkash: 74000, nagad: 66000, rocket: 54000 },
+      { label: '48m ago', cash: 119500, bkash: 75500, nagad: 64800, rocket: 55200 },
+      { label: '36m ago', cash: 122000, bkash: 73000, nagad: 65100, rocket: 54800 },
+      { label: '24m ago', cash: 118000, bkash: 77000, nagad: 63900, rocket: 56100 },
+      { label: '12m ago', cash: 120500, bkash: 74500, nagad: 65200, rocket: 54900 },
+      { label: 'Now',     cash: 120000, bkash: 75000, nagad: 65000, rocket: 55000 }
+    ];
+  }
+};
+
 function App() {
   const [activeTab, setActiveTab] = useState('agent'); // 'agent' or 'ops'
   const [agentsList, setAgentsList] = useState([
@@ -452,6 +492,110 @@ function App() {
                       </div>
                     ))}
                   </div>
+
+                  {/* 2-Hour Wallet & Cash Trend Chart */}
+                  <div className="glass-card" style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      📈 2-Hour Liquidity Trend Visualizer
+                    </h3>
+                    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        <span style={{ display: 'inline-block', width: '12px', height: '3px', background: '#3B82F6' }}></span> Shared Cash
+                      </span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        <span style={{ display: 'inline-block', width: '12px', height: '3px', background: '#e2125a' }}></span> bKash E-Money
+                      </span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        <span style={{ display: 'inline-block', width: '12px', height: '3px', background: '#f37021' }}></span> Nagad E-Money
+                      </span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        <span style={{ display: 'inline-block', width: '12px', height: '3px', background: '#8c2d82' }}></span> Rocket E-Money
+                      </span>
+                    </div>
+
+                    <div style={{ position: 'relative', width: '100%', height: '220px' }}>
+                      <svg viewBox="0 0 600 220" width="100%" height="100%" style={{ overflow: 'visible' }}>
+                        <defs>
+                          <linearGradient id="bkashGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#e2125a" stopOpacity="0.25" />
+                            <stop offset="100%" stopColor="#e2125a" stopOpacity="0.0" />
+                          </linearGradient>
+                          <linearGradient id="cashGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.2" />
+                            <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.0" />
+                          </linearGradient>
+                        </defs>
+                        <line x1="40" y1="30" x2="560" y2="30" stroke="rgba(255,255,255,0.05)" strokeDasharray="3" />
+                        <line x1="40" y1="100" x2="560" y2="100" stroke="rgba(255,255,255,0.05)" strokeDasharray="3" />
+                        <line x1="40" y1="170" x2="560" y2="170" stroke="rgba(255,255,255,0.08)" />
+
+                        {(() => {
+                          const points = getTrendData(agentOverview.agent_code);
+                          const maxVal = agentOverview.agent_code === 'A001' ? 160000 : 130000;
+                          
+                          const getCoords = (key) => points.map((p, idx) => {
+                            const x = 40 + idx * 104;
+                            const y = 170 - (p[key] / maxVal) * 130;
+                            return { x, y, val: p[key] };
+                          });
+
+                          const cashCoords = getCoords('cash');
+                          const bkashCoords = getCoords('bkash');
+                          const nagadCoords = getCoords('nagad');
+                          const rocketCoords = getCoords('rocket');
+
+                          const makePath = (coords) => coords.map((c, i) => `${i === 0 ? 'M' : 'L'} ${c.x} ${c.y}`).join(' ');
+                          const makeAreaPath = (coords) => `${makePath(coords)} L ${coords[coords.length - 1].x} 170 L ${coords[0].x} 170 Z`;
+
+                          return (
+                            <>
+                              {agentOverview.agent_code === 'A001' && (
+                                <path d={makeAreaPath(bkashCoords)} fill="url(#bkashGrad)" />
+                              )}
+                              {agentOverview.agent_code === 'A002' && (
+                                <path d={makeAreaPath(cashCoords)} fill="url(#cashGrad)" />
+                              )}
+
+                              <path d={makePath(cashCoords)} fill="none" stroke="#3B82F6" strokeWidth="2.5" />
+                              <path d={makePath(bkashCoords)} fill="none" stroke="#e2125a" strokeWidth="2" strokeDasharray={agentOverview.agent_code === 'A001' ? "0" : "3"} />
+                              <path d={makePath(nagadCoords)} fill="none" stroke="#f37021" strokeWidth="2" strokeDasharray="3" />
+                              <path d={makePath(rocketCoords)} fill="none" stroke="#8c2d82" strokeWidth="2" strokeDasharray="3" />
+
+                              {points.map((p, idx) => {
+                                const cc = cashCoords[idx];
+                                const bc = bkashCoords[idx];
+                                return (
+                                  <g key={idx}>
+                                    <text x={cc.x} y="192" fill="var(--text-secondary)" fontSize="10" textAnchor="middle">{p.label}</text>
+                                    {agentOverview.agent_code === 'A002' && (
+                                      <circle cx={cc.x} cy={cc.y} r="4" fill="#3B82F6" stroke="#fff" strokeWidth="1" />
+                                    )}
+                                    {agentOverview.agent_code === 'A001' && (
+                                      <circle cx={bc.x} cy={bc.y} r="4" fill="#e2125a" stroke="#fff" strokeWidth="1" />
+                                    )}
+                                  </g>
+                                );
+                              })}
+
+                              <text x={bkashCoords[0].x + 5} y={bkashCoords[0].y - 5} fill="#e2125a" fontSize="9" fontWeight="bold">
+                                {agentOverview.agent_code === 'A001' ? 'bkash: 45k' : ''}
+                              </text>
+                              <text x={bkashCoords[5].x - 5} y={bkashCoords[5].y - 8} fill="#e2125a" fontSize="9" fontWeight="bold" textAnchor="end">
+                                {agentOverview.agent_code === 'A001' ? 'DEPLETED: 5k BDT' : ''}
+                              </text>
+
+                              <text x={cashCoords[0].x + 5} y={cashCoords[0].y - 5} fill="#3B82F6" fontSize="9" fontWeight="bold">
+                                {agentOverview.agent_code === 'A002' ? 'Cash Box: 80k' : ''}
+                              </text>
+                              <text x={cashCoords[5].x - 5} y={cashCoords[5].y - 8} fill="#3B82F6" fontSize="9" fontWeight="bold" textAnchor="end">
+                                {agentOverview.agent_code === 'A002' ? 'DEPLETED: 8k BDT' : ''}
+                              </text>
+                            </>
+                          );
+                        })()}
+                      </svg>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -611,10 +755,45 @@ function App() {
         {/* Tab 2: Ops Control Room (Cases) */}
         {activeTab === 'ops' && (
           <div className="ops-grid fade-in">
-            {/* Left side: Case Queue list */}
             <div>
               <div className="glass-card ops-header-card">
                 <h3 className="alert-panel-title">Operations Case Queue</h3>
+                {cases.length > 0 && (
+                  <div style={{ marginBottom: '1.25rem' }}>
+                    <div style={{ display: 'flex', height: '6px', borderRadius: '3px', overflow: 'hidden', background: 'rgba(255,255,255,0.05)', marginBottom: '0.5rem' }}>
+                      {(() => {
+                        const total = cases.length;
+                        const open = cases.filter(c => c.status === 'open').length;
+                        const ack = cases.filter(c => c.status === 'acknowledged').length;
+                        const esc = cases.filter(c => c.status === 'escalated').length;
+                        const res = cases.filter(c => c.status === 'resolved').length;
+                        
+                        return (
+                          <>
+                            <div style={{ width: `${(open/total)*100}%`, background: '#60A5FA' }} title={`Open: ${open}`} />
+                            <div style={{ width: `${(ack/total)*100}%`, background: '#F59E0B' }} title={`Acknowledged: ${ack}`} />
+                            <div style={{ width: `${(esc/total)*100}%`, background: '#F87171' }} title={`Escalated: ${esc}`} />
+                            <div style={{ width: `${(res/total)*100}%`, background: '#34D399' }} title={`Resolved: ${res}`} />
+                          </>
+                        );
+                      })()}
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.7rem', color: 'var(--text-secondary)', flexWrap: 'wrap' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#60A5FA' }}></span> Open ({cases.filter(c => c.status === 'open').length})
+                      </span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#F59E0B' }}></span> Ack ({cases.filter(c => c.status === 'acknowledged').length})
+                      </span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#F87171' }}></span> Esc ({cases.filter(c => c.status === 'escalated').length})
+                      </span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#34D399' }}></span> Res ({cases.filter(c => c.status === 'resolved').length})
+                      </span>
+                    </div>
+                  </div>
+                )}
                 <div className="filter-bar">
                   <div>
                     <label className="filter-label">Status</label>
