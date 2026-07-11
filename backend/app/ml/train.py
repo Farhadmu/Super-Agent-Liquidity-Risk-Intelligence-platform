@@ -37,7 +37,8 @@ def train_isolation_forest():
     # Feature 7: off_hours_activity (normally active between 9am and 10pm, only 5% occur at off-hours)
     off_hours = np.random.choice([0, 1], size=n_samples, p=[0.95, 0.05])
 
-    # Assemble training dataframe
+    from sklearn.preprocessing import StandardScaler
+
     X_train = pd.DataFrame({
         "amount": amounts,
         "amount_dev": dev_amounts,
@@ -49,21 +50,30 @@ def train_isolation_forest():
     })
 
     print(f"X_train shape: {X_train.shape}")
-    print("Training IsolationForest model...")
+    print("Fitting StandardScaler and training IsolationForest model...")
+    
+    # Scale features
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+
     # Train IsolationForest model
     model = IsolationForest(
-        n_estimators=150,
+        n_estimators=250,
         contamination=0.03, # 3% anomalies expected in normal data fluctuations
         random_state=42
     )
-    model.fit(X_train)
+    model.fit(X_train_scaled)
 
-    # Save pickle
+    # Save pickle as dictionary package
     os.makedirs(MODEL_DIR, exist_ok=True)
+    saved_data = {
+        "model": model,
+        "scaler": scaler
+    }
     with open(MODEL_PATH, "wb") as f:
-        pickle.dump(model, f)
+        pickle.dump(saved_data, f)
     
-    print(f"IsolationForest model trained and saved successfully to: {MODEL_PATH}")
+    print(f"IsolationForest and StandardScaler trained and saved successfully to: {MODEL_PATH}")
 
 if __name__ == "__main__":
     train_isolation_forest()

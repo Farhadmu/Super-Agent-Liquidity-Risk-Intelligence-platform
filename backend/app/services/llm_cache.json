@@ -1,0 +1,12 @@
+{
+  "liquidity:A001:bKash:None:high:30": {
+    "en": "Depletion warning: High net burn rate detected for bKash. Wallet balance is dropping rapidly.",
+    "bn": "📣 বর্তমান লেনদেনের ধারা অনুযায়ী কয়েক মিনিটের মধ্যে আপনার বিকাশ ই-মানি শেষ হয়ে যেতে পারে। নিরাপদে সেবা চালু রাখতে অতিরিক্ত ই-মানি টপ-আপ করার পরামর্শ দেওয়া হচ্ছে।",
+    "banglish": "Bhai, apnar bKash wallet e-money khub druto sesh hoye jacche. Seba chalu rakhte kindly bank app theke e-money refill korun."
+  },
+  "anomaly:A002:Shared Cash:near_identical_amounts:None:None": {
+    "en": "Alert: Detected cluster of near-identical cash-out amounts from a small group of accounts in short intervals.",
+    "bn": "📣 গত ১২ মিনিটে স্বাভাবিকের তুলনায় অনেক বেশি ক্যাশ-আউট হয়েছে। কয়েকটি লেনদেনের পরিমাণ একই এবং অল্প কয়েকটি অ্যাকাউন্ট থেকে বারবার অনুরোধ এসেছে। বড় অঙ্কের নগদ পুনরায় সরবরাহের আগে পর্যালোচনা করুন।",
+    "banglish": "Bhai, last 12 minute e pray eki amount er cash-out bar bar hocche. Kichu account identical transaction korche. High volume cash supply er age transaction check korun."
+  }
+}

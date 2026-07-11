@@ -3,8 +3,49 @@ import json
 import urllib.request
 import urllib.error
 
-# In-memory advisor cache to prevent redundant API calls
+# Path to persistent LLM response cache
+CACHE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "llm_cache.json")
+
+def load_dotenv():
+    # Look for .env in root directory or standard paths
+    possible_dirs = [
+        os.getcwd(),
+        os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))),
+        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    ]
+    for d in possible_dirs:
+        env_path = os.path.join(d, ".env")
+        if os.path.exists(env_path):
+            try:
+                with open(env_path, "r", encoding="utf-8") as env_file:
+                    for line in env_file:
+                        line = line.strip()
+                        if line and not line.startswith("#") and "=" in line:
+                            k, v = line.split("=", 1)
+                            os.environ[k.strip()] = v.strip().strip('"').strip("'")
+                print(f"[LLM Advisor] Loaded environment variables from {env_path}")
+                return
+            except Exception as e:
+                print(f"[LLM Advisor] Error reading env: {e}")
+
+load_dotenv()
+
+# Load persistent advisor cache from file
 _advisor_cache = {}
+if os.path.exists(CACHE_PATH):
+    try:
+        with open(CACHE_PATH, "r", encoding="utf-8") as cache_f:
+            _advisor_cache = json.load(cache_f)
+        print(f"[LLM Advisor] Loaded persistent cache containing {len(_advisor_cache)} items.")
+    except Exception as e:
+        print(f"[LLM Advisor] Failed to load persistent cache: {e}")
+
+def save_cache_persistently():
+    try:
+        with open(CACHE_PATH, "w", encoding="utf-8") as cache_f:
+            json.dump(_advisor_cache, cache_f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        print(f"[LLM Advisor] Failed to save persistent cache: {e}")
 
 LOCAL_FALLBACKS = {
     "liquidity": {
@@ -174,12 +215,16 @@ def _generate_alerts_raw(context_type, details):
 
 def generate_trilingual_alerts(context_type, details):
     """
-    Executes generate_trilingual_alerts wrapping with local in-memory cache lookup
+    Executes generate_trilingual_alerts wrapping with local persistent cache lookup
     """
     cache_key = f"{context_type}:{details.get('agent_code')}:{details.get('provider_name')}:{details.get('pattern_type')}:{details.get('risk_level')}:{details.get('eta_minutes')}"
     if cache_key in _advisor_cache:
         return _advisor_cache[cache_key]
         
     res = _generate_alerts_raw(context_type, details)
-    _advisor_cache[cache_key] = res
+    
+    if res and isinstance(res, dict) and "en" in res:
+        _advisor_cache[cache_key] = res
+        save_cache_persistently()
+        
     return res

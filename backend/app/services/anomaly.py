@@ -151,15 +151,22 @@ def check_transaction_for_anomaly(db: Session, tx: Transaction) -> AnomalyFlag:
     # ML IsolationForest implementation
     try:
         with open(MODEL_PATH, "rb") as f:
-            model = pickle.load(f)
+            saved_data = pickle.load(f)
         
         features, evidence = extract_features_for_tx(db, tx)
-        X = np.array([features])
+        
+        if isinstance(saved_data, dict):
+            model = saved_data["model"]
+            scaler = saved_data["scaler"]
+            X_scaled = scaler.transform([features])
+        else:
+            model = saved_data
+            X_scaled = np.array([features])
         
         # Predict: -1 = anomaly, 1 = normal
-        pred = model.predict(X)[0]
+        pred = model.predict(X_scaled)[0]
         # decision_function returns signed distance. The lower, the more abnormal.
-        raw_score = model.decision_function(X)[0]
+        raw_score = model.decision_function(X_scaled)[0]
         
         # Normalize anomaly score to [0.0, 1.0] range where higher means more anomalous
         # decision_function usually returns positive for normal, negative for anomalies
