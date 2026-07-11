@@ -84,6 +84,21 @@ def extract_features_for_tx(db: Session, tx: Transaction):
         float(off_hours)
     ]
     
+    # Calculate relative contribution weights for explainability indicators (0.0 to 1.0)
+    dev_pct = min(1.0, max(0.0, abs(dev_amount) / max(1.0, mean_amount)))
+    vel_pct = min(1.0, vel_10 / 8.0)
+    sim_pct = min(1.0, sim_count / 6.0)
+    rep_pct = min(1.0, rep_count / 6.0)
+    time_pct = 1.0 if off_hours else 0.0
+
+    contributions = {
+        "amount_deviation": round(dev_pct, 2),
+        "velocity_surge": round(vel_pct, 2),
+        "identical_storm": round(sim_pct, 2),
+        "counterparty_repeat": round(rep_pct, 2),
+        "off_hours": round(time_pct, 2)
+    }
+
     # Store evidence metadata dictionary for explainability
     evidence = {
         "transaction_id": tx.id,
@@ -95,7 +110,8 @@ def extract_features_for_tx(db: Session, tx: Transaction):
         "similar_amounts_30m": sim_count,
         "counterparty_repetition_30m": rep_count,
         "off_hours_activity": bool(off_hours),
-        "timestamp": tx_time.isoformat()
+        "timestamp": tx_time.isoformat(),
+        "contributions": contributions
     }
 
     return features, evidence

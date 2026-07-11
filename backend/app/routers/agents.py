@@ -6,6 +6,7 @@ from backend.app.models.database import get_db
 from backend.app.models.schemas import Agent, Provider, ProviderBalance, CashPosition, AnomalyFlag
 from backend.app.services.liquidity import compute_liquidity_forecast
 from backend.app.services.llm_advisor import generate_trilingual_alerts
+from backend.app.services.rebalance import get_rebalance_recommendations
 
 router = APIRouter(prefix="/agents", tags=["agents"])
 
@@ -164,3 +165,10 @@ def get_agent_anomalies(agent_id: int, db: Session = Depends(get_db)):
             "created_at": f.created_at.isoformat()
         })
     return res
+
+@router.get("/{agent_id}/rebalance")
+def get_rebalance_advice(agent_id: int, db: Session = Depends(get_db)):
+    agent = db.query(Agent).filter(Agent.id == agent_id).first()
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    return get_rebalance_recommendations(db, agent_id)

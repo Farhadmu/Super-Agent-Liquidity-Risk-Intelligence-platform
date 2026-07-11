@@ -4,8 +4,9 @@ from sqlalchemy import desc
 from pydantic import BaseModel
 from typing import List, Optional
 from backend.app.models.database import get_db
-from backend.app.models.schemas import Case, Agent, Provider, CaseEvent
+from backend.app.models.schemas import Case, Agent, Provider, CaseEvent, AnomalyFlag, LiquidityForecast
 from backend.app.services.coordination import acknowledge_case, escalate_case, resolve_case, add_case_note, reassign_case
+from backend.app.routers.stream import broadcast_event
 
 router = APIRouter(prefix="/cases", tags=["cases"])
 
@@ -50,6 +51,27 @@ def list_cases(
             "created_at": e.created_at.isoformat()
         } for e in events_query]
 
+        # Fetch original source details for explainability
+        source_details = None
+        if c.source_type == "anomaly":
+            flag = db.query(AnomalyFlag).filter(AnomalyFlag.id == c.source_id).first()
+            if flag:
+                source_details = {
+                    "pattern_type": flag.pattern_type,
+                    "anomaly_score": float(flag.anomaly_score) if flag.anomaly_score else 0.85,
+                    "confidence": float(flag.confidence) if flag.confidence else 0.70,
+                    "evidence": flag.evidence
+                }
+        elif c.source_type == "liquidity":
+            forecast = db.query(LiquidityForecast).filter(LiquidityForecast.id == c.source_id).first()
+            if forecast:
+                source_details = {
+                    "risk_level": forecast.risk_level,
+                    "eta_minutes": forecast.eta_minutes,
+                    "confidence": float(forecast.confidence) if forecast.confidence else 0.80,
+                    "reason": forecast.reason
+                }
+
         results.append({
             "id": c.id,
             "source_type": c.source_type,
@@ -67,7 +89,8 @@ def list_cases(
             "recommended_action": c.recommended_action,
             "created_at": c.created_at.isoformat(),
             "updated_at": c.updated_at.isoformat(),
-            "timeline": events
+            "timeline": events,
+            "source_details": source_details
         })
     return results
 
@@ -76,6 +99,7 @@ def post_acknowledge_case(case_id: int, req: AcknowledgeRequest, db: Session = D
     case = acknowledge_case(db, case_id, req.actor_role, req.actor_name)
     if not case:
         raise HTTPException(status_code=404, detail="Case not found or status already changed")
+    broadcast_event("case_update", {"case_id": case.id, "status": case.status, "assigned_to": case.assigned_to})
     return {"status": "success", "case_status": case.status, "assigned_to": case.assigned_to}
 
 @router.post("/{case_id}/escalate")
@@ -83,6 +107,7 @@ def post_escalate_case(case_id: int, req: TransitionRequest, db: Session = Depen
     case = escalate_case(db, case_id, req.actor_role, req.note)
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
+    broadcast_event("case_update", {"case_id": case.id, "status": case.status})
     return {"status": "success", "case_status": case.status}
 
 @router.post("/{case_id}/resolve")
@@ -90,6 +115,7 @@ def post_resolve_case(case_id: int, req: TransitionRequest, db: Session = Depend
     case = resolve_case(db, case_id, req.actor_role, req.note)
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
+    broadcast_event("case_update", {"case_id": case.id, "status": case.status})
     return {"status": "success", "case_status": case.status}
 
 @router.post("/{case_id}/notes")
@@ -97,6 +123,7 @@ def post_case_note(case_id: int, req: TransitionRequest, db: Session = Depends(g
     case = add_case_note(db, case_id, req.actor_role, req.note)
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
+    broadcast_event("case_update", {"case_id": case.id, "action": "note_added"})
     return {"status": "success"}
 
 class ReassignRequest(BaseModel):
@@ -109,4 +136,5 @@ def post_reassign_case(case_id: int, req: ReassignRequest, db: Session = Depends
     case = reassign_case(db, case_id, req.actor_role, req.new_role, req.note)
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
+    broadcast_event("case_update", {"case_id": case.id, "assigned_role": case.assigned_role})
     return {"status": "success"}

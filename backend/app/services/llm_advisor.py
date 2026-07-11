@@ -265,3 +265,47 @@ def generate_trilingual_alerts(context_type, details):
         save_cache_persistently()
         
     return res
+
+def generate_custom_advisory(custom_system_prompt: str, context_type: str, details: dict):
+    """
+    Executes a custom preview query against the LLM with a user-provided prompt wrapper.
+    """
+    gemini_key = os.environ.get("GEMINI_API_KEY")
+    openai_key = os.environ.get("OPENAI_API_KEY")
+    
+    prompt = f"""
+    {custom_system_prompt}
+    
+    Context Type: {context_type}
+    Details:
+    {json.dumps(details, indent=2)}
+    
+    Respond ONLY with a JSON object containing precisely these keys:
+    - "en": English text
+    - "bn": Bangla translation
+    - "banglish": Banglish translation
+    
+    Do not add any markdown blocks or formatting. Return raw JSON.
+    """
+    
+    # Try Gemini
+    if gemini_key:
+        try:
+            return call_gemini(prompt, gemini_key)
+        except Exception as e:
+            print(f"[LLM Advisor] Custom Gemini failed: {e}")
+            
+    # Try OpenAI
+    if openai_key:
+        try:
+            return call_openai(prompt, openai_key)
+        except Exception as e:
+            print(f"[LLM Advisor] Custom OpenAI failed: {e}")
+            
+    # Local fallback
+    if context_type == "liquidity":
+        return _local_liquidity_fallback(details)
+    else:
+        pat = details.get("pattern_type") or "default"
+        fallback_map = LOCAL_FALLBACKS["anomaly"]
+        return fallback_map.get(pat, fallback_map["default"])

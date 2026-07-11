@@ -10,6 +10,8 @@ from backend.app.simulator.generate_data import seed_database
 from backend.app.services.liquidity import compute_liquidity_forecast
 from backend.app.services.anomaly import check_transaction_for_anomaly
 from backend.app.services.coordination import create_case_from_alert
+from backend.app.services.llm_advisor import generate_custom_advisory
+from backend.app.routers.stream import broadcast_event
 
 router = APIRouter(prefix="/simulate", tags=["simulate"])
 
@@ -29,9 +31,16 @@ class CustomScenarioInput(BaseModel):
     anomaly_counterparty: str = "CUST_CUSTOM"
     anomaly_type: str = "cash_out"
 
+def run_seed_and_broadcast():
+    try:
+        seed_database()
+        broadcast_event("data_reset", {"message": "Database successfully re-seeded and models re-trained."})
+    except Exception as e:
+        print(f"[Simulate Router] Error in background seed: {e}")
+
 @router.post("/seed")
 def trigger_seed(background_tasks: BackgroundTasks):
-    background_tasks.add_task(seed_database)
+    background_tasks.add_task(run_seed_and_broadcast)
     return {"status": "success", "message": "Database seeding triggered. Re-building schemas, training IsolationForest, and regenerating scenarios."}
 
 @router.post("/custom-scenario")
@@ -174,6 +183,14 @@ def apply_custom_scenario(payload: CustomScenarioInput, db: Session = Depends(ge
                 recommended_action=f"Replenish {prov.name} e-money wallet. Coordinate electronic transfer."
             )
 
+    broadcast_event("scenario_update", {
+        "agent_id": agent.id,
+        "message": f"Custom scenario applied for Agent {agent.agent_code}.",
+        "shared_cash": float(payload.shared_cash),
+        "injected_transactions": len(injected_txs),
+        "flagged_anomalies": flagged_count
+    })
+
     return {
         "status": "success",
         "message": f"Custom scenario applied for Agent {agent.agent_code}.",
@@ -183,3 +200,45 @@ def apply_custom_scenario(payload: CustomScenarioInput, db: Session = Depends(ge
             "flagged_anomalies": flagged_count
         }
     }
+
+from typing import Optional
+
+class CustomAdvisoryInput(BaseModel):
+    custom_system_prompt: str
+    context_type: str
+    agent_code: str = "A001"
+    provider_name: str = "bKash"
+    current_balance: float = 12500.0
+    eta_minutes: Optional[int] = 45
+    risk_level: str = "high"
+    confidence: float = 0.85
+    pattern_type: str = "near_identical_amounts"
+
+@router.post("/advisory-preview")
+def post_advisory_preview(payload: CustomAdvisoryInput):
+    details = {
+        "agent_code": payload.agent_code,
+        "provider_name": payload.provider_name,
+        "current_balance": payload.current_balance,
+        "eta_minutes": payload.eta_minutes,
+        "risk_level": payload.risk_level,
+        "confidence": payload.confidence,
+        "pattern_type": payload.pattern_type,
+        "evidence": {
+            "amount": payload.current_balance,
+            "historical_mean": 5000.0,
+            "amount_deviation": payload.current_balance - 5000.0,
+            "velocity_10m": 6,
+            "velocity_30m": 12,
+            "similar_amounts_30m": 5,
+            "counterparty_repetition_30m": 4,
+            "off_hours_activity": True
+        }
+    }
+    
+    res = generate_custom_advisory(
+        custom_system_prompt=payload.custom_system_prompt,
+        context_type=payload.context_type,
+        details=details
+    )
+    return res

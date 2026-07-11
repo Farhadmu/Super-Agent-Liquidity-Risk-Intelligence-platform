@@ -223,3 +223,40 @@ Returns live precision, recall, latencies, and explanation coverage ratios.
   }
 }
 ```
+
+---
+
+## 5. System Intelligence & Stream Endpoints (`/api`)
+
+### 🔹 Server-Sent Events (SSE) Stream
+Opens a persistent HTTP keep-alive connection to receive real-time updates.
+- **Endpoint**: `GET /api/stream`
+- **Events Broadcasted**:
+  - `case_update`: Triggered when case status, ownership, or department reassignment occurs.
+  - `scenario_update`: Broadcasted when new custom sandbox scenarios or transaction bursts are injected.
+  - `data_reset`: Fired when the database is seeded or reset back to default states.
+
+### 🔹 Liquidity Rebalancing Recommendations
+Returns a set of optimal rebalancing instructions across provider wallets and shared cash pools.
+- **Endpoint**: `GET /agents/{agent_id}/rebalance`
+- **Response `200 OK`**:
+  - Returns a checklist of recommended electronic transfers or cash-out redirects, matching surplus wallets to deficit pools.
+
+### 🔹 Custom Prompt Advisory Playground
+Simulates LLM response generation with a custom system prompt and input data context.
+- **Endpoint**: `POST /simulate/advisory-preview`
+- **Request Body**:
+```json
+{
+  "custom_system_prompt": "You are a risk supervisor. Generate high priority warnings.",
+  "context_type": "liquidity"
+}
+```
+- **Response `200 OK`**:
+```json
+{
+  "en": "English advisory text...",
+  "bn": "Bangla translation...",
+  "banglish": "Banglish translation..."
+}
+```

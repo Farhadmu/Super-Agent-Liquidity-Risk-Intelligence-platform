@@ -2,7 +2,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.app.models.database import engine, Base
-from backend.app.routers import agents, cases, simulate, metrics
+from backend.app.routers import agents, cases, simulate, metrics, stream
 
 # Initialize all database tables on startup
 Base.metadata.create_all(bind=engine)
@@ -39,6 +39,7 @@ app.include_router(agents.router)
 app.include_router(cases.router)
 app.include_router(simulate.router)
 app.include_router(metrics.router)
+app.include_router(stream.router)
 
 @app.get("/")
 def read_root():
