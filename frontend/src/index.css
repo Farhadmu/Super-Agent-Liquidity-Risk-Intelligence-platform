@@ -27,6 +27,8 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.12) rgba(17, 24, 39, 0.3);
 }
 
 /* ============================================================
@@ -74,6 +76,7 @@ body {
    ============================================================ */
 header {
   background: rgba(17, 24, 39, 0.6);
+  -webkit-backdrop-filter: var(--glass-backdrop);
   backdrop-filter: var(--glass-backdrop);
   border-bottom: 1px solid var(--bg-card-border);
   padding: 1.25rem 2rem;
@@ -173,6 +176,7 @@ header {
    ============================================================ */
 .glass-card {
   background: var(--bg-card);
+  -webkit-backdrop-filter: var(--glass-backdrop);
   backdrop-filter: var(--glass-backdrop);
   border: 1px solid var(--bg-card-border);
   border-radius: 1.25rem;
