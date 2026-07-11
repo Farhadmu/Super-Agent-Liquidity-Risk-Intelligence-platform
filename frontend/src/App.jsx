@@ -1,6 +1,82 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 
 const API_BASE = 'http://localhost:8080';
+
+const AGENTS_LIST = [
+  { id: 1, code: 'A001', name: 'Sajib Telecom (Dhaka)' },
+  { id: 2, code: 'A002', name: 'Mayer Doa Enterprise (Chittagong)' },
+  { id: 3, code: 'A003', name: 'Riyad Variety Store (Sylhet)' },
+  { id: 4, code: 'A004', name: 'Bismillah Store (Dhaka)' }
+];
+
+const DEMO_USERS = [
+  {
+    id: 'provider_ops',
+    name: 'Ops Officer Amina',
+    role: 'provider_ops',
+    roleLabel: 'Provider Operations',
+    scope: 'Provider wallet shortages',
+    defaultTab: 'ops',
+    username: 'amina.ops',
+    password: 'demo123'
+  },
+  {
+    id: 'risk_analyst',
+    name: 'Analyst Farhan',
+    role: 'risk_analyst',
+    roleLabel: 'Risk Analyst',
+    scope: 'Behavioral anomaly review',
+    defaultTab: 'ops',
+    username: 'farhan.risk',
+    password: 'demo123'
+  },
+  {
+    id: 'field_officer',
+    name: 'Territory Officer Tanvir',
+    role: 'field_officer',
+    roleLabel: 'Field Officer',
+    scope: 'Shared cash coordination',
+    defaultTab: 'ops',
+    username: 'tanvir.field',
+    password: 'demo123'
+  },
+  {
+    id: 'management',
+    name: 'Management Lead Nusrat',
+    role: 'management',
+    roleLabel: 'Management',
+    scope: 'Oversight, validation metrics, all cases',
+    defaultTab: 'ops',
+    username: 'nusrat.mgmt',
+    password: 'demo123'
+  },
+  {
+    id: 'super_agent',
+    name: 'Sajib Telecom',
+    role: 'agent',
+    roleLabel: 'Super Agent',
+    scope: 'Agent dashboard and local alerts',
+    defaultTab: 'agent',
+    agentId: 1,
+    username: 'sajib.agent',
+    password: 'demo123'
+  }
+];
+
+const getSavedUser = () => {
+  try {
+    const savedUserId = window.localStorage.getItem('superAgentDemoUser');
+    return DEMO_USERS.find(user => user.id === savedUserId) || null;
+  } catch {
+    return null;
+  }
+};
+
+const getRoleLabel = (role) => {
+  const user = DEMO_USERS.find(item => item.role === role);
+  return user ? user.roleLabel : role.replace(/_/g, ' ');
+};
 
 const getTrendData = (agentOverview, hours = 2) => {
   if (!agentOverview) return [];
@@ -100,14 +176,10 @@ const getTrendData = (agentOverview, hours = 2) => {
 };
 
 function App() {
-  const [activeTab, setActiveTab] = useState('agent'); // 'agent' or 'ops'
-  const [agentsList, setAgentsList] = useState([
-    { id: 1, code: 'A001', name: 'Sajib Telecom (Dhaka)' },
-    { id: 2, code: 'A002', name: 'Mayer Doa Enterprise (Chittagong)' },
-    { id: 3, code: 'A003', name: 'Riyad Variety Store (Sylhet)' },
-    { id: 4, code: 'A004', name: 'Bismillah Store (Dhaka)' }
-  ]);
-  const [selectedAgentId, setSelectedAgentId] = useState(1);
+  const [currentUser, setCurrentUser] = useState(getSavedUser);
+  const [activeTab, setActiveTab] = useState(currentUser?.defaultTab || 'agent'); // 'agent' or 'ops'
+  const agentsList = AGENTS_LIST;
+  const [selectedAgentId, setSelectedAgentId] = useState(currentUser?.agentId || 1);
   const [agentOverview, setAgentOverview] = useState(null);
   const [agentForecasts, setAgentForecasts] = useState(null);
   const [agentAnomalies, setAgentAnomalies] = useState([]);
@@ -122,8 +194,6 @@ function App() {
   // Note/Action Input State
   const [noteType, setNoteType] = useState(''); // 'escalate', 'resolve', 'note'
   const [customNote, setCustomNote] = useState('');
-  const [actorName, setActorName] = useState('Ops Officer Amina');
-  const [actorRole, setActorRole] = useState('provider_ops'); // or 'risk_analyst', 'field_officer'
 
   // Validation Metrics State
   const [metrics, setMetrics] = useState(null);
@@ -138,50 +208,75 @@ function App() {
 
   const [showAgentInfoModal, setShowAgentInfoModal] = useState(false);
   const [showActionsDropdown, setShowActionsDropdown] = useState(false);
+  const [loginRoleId, setLoginRoleId] = useState(DEMO_USERS[0].id);
+  const [loginUsername, setLoginUsername] = useState(DEMO_USERS[0].username);
+  const [loginPassword, setLoginPassword] = useState(DEMO_USERS[0].password);
+  const [loginError, setLoginError] = useState('');
+  const [tooltip, setTooltip] = useState(null);
 
   // Trend graph visualizer interactive states
   const [trendHours, setTrendHours] = useState(2);
   const [trendProviders, setTrendProviders] = useState(['cash', 'bkash', 'nagad', 'rocket']);
   const [hoveredPoint, setHoveredPoint] = useState(null);
 
-  // Escape key to close modals
-  useEffect(() => {
-    const handleEscape = (e) => {
-      if (e.key === 'Escape') {
-        setShowMetrics(false);
-        setShowAgentInfoModal(false);
-        setShowActionsDropdown(false);
-      }
-    };
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, []);
+  const actorName = currentUser?.name || 'Demo User';
+  const actorRole = currentUser?.role || 'viewer';
+  const selectedLoginUser = DEMO_USERS.find(user => user.id === loginRoleId) || DEMO_USERS[0];
+  const isManagement = actorRole === 'management';
+  const visibleAgents = currentUser?.role === 'agent'
+    ? agentsList.filter(agent => agent.id === currentUser.agentId)
+    : agentsList;
+  const canManageSelectedCase = Boolean(
+    selectedCase
+    && currentUser
+    && selectedCase.assigned_role === actorRole
+    && selectedCase.status !== 'resolved'
+  );
 
-  // Fetch Agent Data
-  useEffect(() => {
-    if (activeTab === 'agent' && selectedAgentId) {
-      fetchAgentData(selectedAgentId);
-    }
-  }, [selectedAgentId, activeTab]);
+  const showTooltip = (text, target) => {
+    const rect = target.getBoundingClientRect();
+    const tooltipWidth = Math.min(240, window.innerWidth - 32);
+    const x = Math.min(
+      window.innerWidth - tooltipWidth / 2 - 16,
+      Math.max(tooltipWidth / 2 + 16, rect.left + rect.width / 2)
+    );
+    const spaceAbove = rect.top;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const showBelow = spaceAbove < 120 && spaceBelow > spaceAbove;
+    const y = showBelow ? rect.bottom + 10 : rect.top - 10;
+    setTooltip({ text, x, y, placement: showBelow ? 'bottom' : 'top' });
+  };
 
-  // Fetch Cases Data
-  useEffect(() => {
-    if (activeTab === 'ops') {
-      fetchCases();
-    }
-  }, [activeTab, filterStatus, filterRole]);
+  const hideTooltip = () => setTooltip(null);
 
-  // Sync selected case details when list changes
-  useEffect(() => {
-    if (selectedCaseId && cases.length > 0) {
-      const match = cases.find(c => c.id === selectedCaseId);
-      if (match) setSelectedCase(match);
-    } else {
-      setSelectedCase(null);
-    }
-  }, [selectedCaseId, cases]);
+  const HelpDot = ({ text }) => (
+    <span
+      className="help-dot"
+      tabIndex={0}
+      aria-label={text}
+      onMouseEnter={e => showTooltip(text, e.currentTarget)}
+      onFocus={e => showTooltip(text, e.currentTarget)}
+      onMouseLeave={hideTooltip}
+      onBlur={hideTooltip}
+    >
+      ?
+    </span>
+  );
 
-  const fetchAgentData = async (id) => {
+  const TooltipOverlay = () => {
+    if (!tooltip) return null;
+    return createPortal(
+      <div
+        className={`app-tooltip ${tooltip.placement}`}
+        style={{ left: tooltip.x, top: tooltip.y }}
+      >
+        {tooltip.text}
+      </div>,
+      document.body
+    );
+  };
+
+  const fetchAgentData = useCallback(async (id) => {
     try {
       setLoading(true);
       const overviewRes = await fetch(`${API_BASE}/agents/${id}/overview`);
@@ -203,9 +298,9 @@ function App() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchCases = async () => {
+  const fetchCases = useCallback(async () => {
     try {
       setLoading(true);
       let url = `${API_BASE}/cases?`;
@@ -215,8 +310,8 @@ function App() {
       const res = await fetch(url);
       const data = await res.json();
       setCases(data);
-      if (data.length > 0 && !selectedCaseId) {
-        setSelectedCaseId(data[0].id);
+      if (data.length > 0) {
+        setSelectedCaseId(currentId => currentId || data[0].id);
       }
 
       setError(null);
@@ -226,7 +321,112 @@ function App() {
     } finally {
       setLoading(false);
     }
+  }, [filterRole, filterStatus]);
+
+  const handleLogin = (user) => {
+    try {
+      window.localStorage.setItem('superAgentDemoUser', user.id);
+    } catch {
+      // Local storage is optional for the demo session.
+    }
+    setCurrentUser(user);
+    setActiveTab(user.defaultTab);
+    setFilterStatus('');
+    setFilterRole(user.role === 'management' || user.role === 'agent' ? '' : user.role);
+    setNoteType('');
+    setCustomNote('');
+    if (user.agentId) {
+      setSelectedAgentId(user.agentId);
+    }
   };
+
+  const handleLoginRoleChange = (userId) => {
+    const user = DEMO_USERS.find(item => item.id === userId) || DEMO_USERS[0];
+    setLoginRoleId(user.id);
+    setLoginUsername(user.username);
+    setLoginPassword(user.password);
+    setLoginError('');
+  };
+
+  const handleLoginSubmit = (e) => {
+    e.preventDefault();
+    if (loginUsername.trim() === selectedLoginUser.username && loginPassword === selectedLoginUser.password) {
+      handleLogin(selectedLoginUser);
+      return;
+    }
+    setLoginError('Demo credentials do not match the selected role.');
+  };
+
+  const handleLogout = () => {
+    try {
+      window.localStorage.removeItem('superAgentDemoUser');
+    } catch {
+      // Local storage is optional for the demo session.
+    }
+    setCurrentUser(null);
+    setShowMetrics(false);
+    setShowActionsDropdown(false);
+    setNoteType('');
+    setCustomNote('');
+  };
+
+  // Escape key and scroll handler to dismiss overlays
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        setShowMetrics(false);
+        setShowAgentInfoModal(false);
+        setShowActionsDropdown(false);
+      }
+    };
+    const handleScroll = () => {
+      hideTooltip();
+    };
+    document.addEventListener('keydown', handleEscape);
+    window.addEventListener('scroll', handleScroll, true);
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      window.removeEventListener('scroll', handleScroll, true);
+    };
+  }, []);
+
+  // Fetch Agent Data
+  useEffect(() => {
+    if (activeTab === 'agent' && selectedAgentId) {
+      fetchAgentData(selectedAgentId);
+    }
+  }, [selectedAgentId, activeTab, fetchAgentData]);
+
+  // Fetch Cases Data
+  useEffect(() => {
+    if (activeTab === 'ops') {
+      fetchCases();
+    }
+  }, [activeTab, fetchCases]);
+
+  useEffect(() => {
+    if (!currentUser) return;
+    if (currentUser.role === 'management' || currentUser.role === 'agent') {
+      setFilterRole('');
+    } else {
+      setFilterRole(currentUser.role);
+    }
+  }, [currentUser]);
+
+  // Sync selected case details when list changes
+  useEffect(() => {
+    if (selectedCaseId && cases.length > 0) {
+      const match = cases.find(c => c.id === selectedCaseId);
+      if (match) setSelectedCase(match);
+    } else {
+      setSelectedCase(null);
+    }
+  }, [selectedCaseId, cases]);
+
+  useEffect(() => {
+    setNoteType('');
+    setCustomNote('');
+  }, [selectedCaseId, currentUser]);
 
   const fetchValidationMetrics = async () => {
     try {
@@ -267,6 +467,7 @@ function App() {
 
   // Case Actions
   const handleAcknowledge = async (caseId) => {
+    if (!canManageSelectedCase) return;
     try {
       const res = await fetch(`${API_BASE}/cases/${caseId}/acknowledge`, {
         method: 'POST',
@@ -282,6 +483,7 @@ function App() {
   };
 
   const handleTransitionSubmit = async (caseId) => {
+    if (!canManageSelectedCase) return;
     if (!customNote.trim()) return;
     try {
       let endpoint = 'notes';
@@ -310,8 +512,121 @@ function App() {
     }
   };
 
+  if (!currentUser) {
+    return (
+      <main className="login-shell">
+        <TooltipOverlay />
+        <section className="glass-card login-panel fade-in">
+          <div className="login-layout">
+            <div className="login-form-column">
+              <div className="login-brand">
+                <div className="logo-icon">Ω</div>
+                <div>
+                  <h1 className="logo-text">SUPER-AGENT</h1>
+                  <span className="logo-subtitle">ROLE-BASED DEMO ACCESS</span>
+                </div>
+              </div>
+
+              <div className="login-intro">
+                <h2>Sign In</h2>
+                <span className="compact-note">
+                  Demo mode <HelpDot text="Each demo account opens the portal with role-based case access and audit identity." />
+                </span>
+              </div>
+
+              <form className="login-form" onSubmit={handleLoginSubmit}>
+                <label className="login-field">
+                  <span>Role</span>
+                  <select
+                    value={loginRoleId}
+                    onChange={e => handleLoginRoleChange(e.target.value)}
+                  >
+                    {DEMO_USERS.map(user => (
+                      <option key={user.id} value={user.id}>{user.roleLabel}</option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="login-field">
+                  <span>Username</span>
+                  <input
+                    value={loginUsername}
+                    onChange={e => setLoginUsername(e.target.value)}
+                    autoComplete="username"
+                  />
+                </label>
+
+                <label className="login-field">
+                  <span>Password</span>
+                  <input
+                    type="password"
+                    value={loginPassword}
+                    onChange={e => setLoginPassword(e.target.value)}
+                    autoComplete="current-password"
+                  />
+                </label>
+
+                {loginError && <div className="login-error">{loginError}</div>}
+
+                <button className="btn btn-primary login-submit-btn" type="submit">
+                  Enter Dashboard
+                </button>
+              </form>
+
+              <div className="login-credential-strip">
+                <span>Demo username</span>
+                <strong>{selectedLoginUser.username}</strong>
+                <span>Password</span>
+                <strong>{selectedLoginUser.password}</strong>
+              </div>
+            </div>
+
+            <div className="login-role-column">
+              <div className="login-selected-preview">
+                <span className="login-role-label">{selectedLoginUser.roleLabel}</span>
+                <strong>{selectedLoginUser.name}</strong>
+                <p>{selectedLoginUser.scope}</p>
+                <div className="login-preview-grid">
+                  <div>
+                    <span>Default View</span>
+                    <strong>{selectedLoginUser.defaultTab === 'ops' ? 'Ops Control Room' : 'Agent Dashboard'}</strong>
+                  </div>
+                  <div>
+                    <span>Permission</span>
+                    <strong>
+                      {selectedLoginUser.role === 'management' ? 'Read-only' : selectedLoginUser.role === 'agent' ? 'Own dashboard' : 'Routed cases'}
+                      <HelpDot text={selectedLoginUser.role === 'management' ? 'Management can review all cases and metrics, but cannot change case status.' : selectedLoginUser.role === 'agent' ? 'Agent view is scoped to the selected super agent dashboard.' : 'This role can act only on cases routed to its queue.'} />
+                    </strong>
+                  </div>
+                </div>
+              </div>
+
+              <div className="login-role-grid">
+                {DEMO_USERS.map(user => (
+                  <button
+                    key={user.id}
+                    className={`login-role-card ${loginRoleId === user.id ? 'active' : ''}`}
+                    onClick={() => handleLoginRoleChange(user.id)}
+                    type="button"
+                  >
+                    <span className="login-role-label">{user.roleLabel}</span>
+                    <span className="login-role-name">{user.name}</span>
+                    <span className="login-role-scope">
+                      {user.defaultTab === 'ops' ? 'Ops' : 'Agent'} <HelpDot text={user.scope} />
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <>
+      <TooltipOverlay />
       <header>
         <div className="header-brand-row">
           <div className="logo-container">
@@ -335,11 +650,20 @@ function App() {
             </button>
             {showActionsDropdown && (
               <div className="glass-card header-dropdown-menu" onClick={e => e.stopPropagation()}>
-                <button className="btn btn-secondary header-dropdown-btn" onClick={() => { setShowActionsDropdown(false); fetchValidationMetrics(); }}>
+                <div className="header-user-card mobile">
+                  <span className="header-user-name">{currentUser.name}</span>
+                  <span className="header-user-role">{currentUser.roleLabel}</span>
+                </div>
+                {isManagement && (
+                  <button className="btn btn-secondary header-dropdown-btn" onClick={() => { setShowActionsDropdown(false); fetchValidationMetrics(); }}>
                   Validation Metrics
-                </button>
+                  </button>
+                )}
                 <button className="btn btn-primary header-dropdown-btn" onClick={() => { setShowActionsDropdown(false); triggerSeed(); }} disabled={loading}>
                   Reset / Seed Data
+                </button>
+                <button className="btn btn-secondary header-dropdown-btn" onClick={handleLogout}>
+                  Switch Role
                 </button>
               </div>
             )}
@@ -355,17 +679,27 @@ function App() {
           </button>
           <button 
             className={`toggle-btn ${activeTab === 'ops' ? 'active' : ''}`}
-            onClick={() => setActiveTab('ops')}
+            onClick={() => currentUser.role !== 'agent' && setActiveTab('ops')}
+            disabled={currentUser.role === 'agent'}
           >
             Ops Control Room
           </button>
         </div>
         <div className="header-actions-desktop">
-          <button className="btn btn-secondary" onClick={fetchValidationMetrics}>
-            Validation Metrics
-          </button>
+          <div className="header-user-card">
+            <span className="header-user-name">{currentUser.name}</span>
+            <span className="header-user-role">{currentUser.roleLabel}</span>
+          </div>
+          {isManagement && (
+            <button className="btn btn-secondary" onClick={fetchValidationMetrics}>
+              Validation Metrics
+            </button>
+          )}
           <button className="btn btn-primary" onClick={triggerSeed} disabled={loading}>
             Reset / Seed Data
+          </button>
+          <button className="btn btn-secondary" onClick={handleLogout}>
+            Switch Role
           </button>
         </div>
       </header>
@@ -382,7 +716,17 @@ function App() {
           <div className="glass-card error-container">
             <div className="error-icon">⚠️</div>
             <p className="error-message">{error}</p>
-            <button className="btn btn-primary" onClick={() => { setError(null); activeTab === 'agent' ? fetchAgentData(selectedAgentId) : fetchCases(); }}>
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                setError(null);
+                if (activeTab === 'agent') {
+                  fetchAgentData(selectedAgentId);
+                } else {
+                  fetchCases();
+                }
+              }}
+            >
               Retry Connection
             </button>
           </div>
@@ -478,7 +822,7 @@ function App() {
                     <span className="metric-value">{(metrics.liquidity_forecasting.accuracy_ratio * 100).toFixed(0)}%</span>
                   </div>
                   <div className="metrics-info-box">
-                    💡 {metrics.liquidity_forecasting.context}
+                    {metrics.liquidity_forecasting.context}
                   </div>
                 </div>
 
@@ -533,7 +877,7 @@ function App() {
                       value={selectedAgentId} 
                       onChange={e => setSelectedAgentId(Number(e.target.value))}
                     >
-                      {agentsList.map(a => (
+                      {visibleAgents.map(a => (
                         <option key={a.id} value={a.id}>{a.code} - {a.name}</option>
                       ))}
                     </select>
@@ -552,7 +896,7 @@ function App() {
                 <div className="glass-card" style={{ marginBottom: '1rem' }}>
                   <h3 className="agent-selector-title">Select Active Agent</h3>
                   <div className="agent-selector-list">
-                    {agentsList.map(a => (
+                    {visibleAgents.map(a => (
                       <div 
                         key={a.id} 
                         className={`agent-selector-item ${selectedAgentId === a.id ? 'active' : ''}`}
@@ -607,12 +951,12 @@ function App() {
               {agentOverview && (
                 <div>
                   <h2 className="section-heading">
-                    Liquidity Overview
+                    Liquidity Overview <HelpDot text="Balances are separated into shared physical cash and provider-specific e-money wallets." />
                   </h2>
                   <div className="balance-grid">
                     {/* Shared Cash Card */}
                     <div className="glass-card balance-card">
-                      <span className="balance-label">Shared Cash Pool</span>
+                      <span className="balance-label">Shared Cash <HelpDot text="Physical cash box used when customers request cash-out. Shared across provider services." /></span>
                       <span className="balance-amount">
                         {agentOverview.shared_cash.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                         <span className="balance-currency">BDT</span>
@@ -634,7 +978,7 @@ function App() {
                           <span className="badge-provider" style={{ backgroundColor: pb.display_color }}>
                             {pb.provider_name}
                           </span>
-                          E-Money Balance
+                          E-Money <HelpDot text="Provider-specific wallet balance. It is never mixed or converted with another provider." />
                         </span>
                         <span className="balance-amount">
                           {pb.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
@@ -748,7 +1092,7 @@ function App() {
                       </div>
                     ) : (
                       <div className="trend-hover-details-placeholder">
-                        💡 Hover over the graph points to see detailed BDT balance readings.
+                        Select a point
                       </div>
                     )}
 
@@ -933,7 +1277,7 @@ function App() {
                 {/* Active Liquidity Risk Forecasts */}
                 <div className="glass-card">
                   <h3 className="alert-panel-title">
-                    <span style={{ color: 'var(--color-warning)' }}>⏳</span> Liquidity Shortage Risk
+                    <span style={{ color: 'var(--color-warning)' }}>⏳</span> Liquidity Risk <HelpDot text="Shows projected shortage risk for shared cash and each provider wallet." />
                   </h3>
                   
                   {/* Loading state for forecasts */}
@@ -965,8 +1309,9 @@ function App() {
                             </div>
 
                             {f.eta_minutes !== null ? (
-                              <div className="alert-time">
-                                Shortage ETA: ~{f.eta_minutes} Mins
+                              <div className="alert-time-block">
+                                <span>Projected shortage time</span>
+                                <strong>~{f.eta_minutes} Mins</strong>
                               </div>
                             ) : (
                               <div className="no-shortage-text">
@@ -989,7 +1334,7 @@ function App() {
 
                             <div className="alert-meta">
                               <div>
-                                <div>Confidence Score</div>
+                                <div>Confidence <HelpDot text="Based on transaction volume, flow volatility, and data freshness." /></div>
                                 <div className="confidence-display">
                                   {(f.confidence * 100).toFixed(0)}%
                                   <div className="confidence-bar-container">
@@ -1018,7 +1363,7 @@ function App() {
                 {/* Active Anomaly Alerts */}
                 <div className="glass-card">
                   <h3 className="alert-panel-title">
-                    <span style={{ color: 'var(--color-danger)' }}>⚡</span> Behavioral Risk Flags
+                    <span style={{ color: 'var(--color-danger)' }}>⚡</span> Review Flags <HelpDot text="Unusual behavior signals for human review. These are not fraud verdicts." />
                   </h3>
                   
                   {agentAnomalies.length === 0 ? (
@@ -1043,7 +1388,7 @@ function App() {
                               Pattern: {a.pattern_type.replace(/_/g, ' ')}
                             </div>
                             <p className="anomaly-score-text">
-                              Decision Score: {(a.anomaly_score * 100).toFixed(1)}% (Confidence: {(a.confidence * 100).toFixed(0)}%)
+                              Review Score <HelpDot text="Higher score means the transaction pattern is farther from normal behavior. Human review is still required." />: {(a.anomaly_score * 100).toFixed(1)}% • Confidence: {(a.confidence * 100).toFixed(0)}%
                             </p>
                           </div>
 
@@ -1141,21 +1486,11 @@ function App() {
                   </div>
 
                   <div className="acting-as-container">
-                    <div className="acting-as-label">Acting As: </div>
-                    <select 
-                      className="filter-select acting-as-select"
-                      value={actorRole} 
-                      onChange={e => {
-                        setActorRole(e.target.value);
-                        if (e.target.value === 'provider_ops') setActorName('Ops Officer Amina');
-                        if (e.target.value === 'field_officer') setActorName('Territory Officer Tanvir');
-                        if (e.target.value === 'risk_analyst') setActorName('Analyst Farhan');
-                      }}
-                    >
-                      <option value="provider_ops">Provider Ops (Amina)</option>
-                      <option value="field_officer">Field Officer (Tanvir)</option>
-                      <option value="risk_analyst">Risk Analyst (Farhan)</option>
-                    </select>
+                    <div className="acting-as-label">Signed In</div>
+                    <div className="acting-as-session">
+                      <span>{actorName}</span>
+                      <strong>{currentUser.roleLabel}</strong>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1230,7 +1565,7 @@ function App() {
                   <div>
                     <div className="details-section-title">Case Owner</div>
                     <div className="case-owner-text">
-                      {selectedCase.assigned_to ? `👤 ${selectedCase.assigned_to} (${selectedCase.assigned_role})` : '👥 Unassigned (Open Queue)'}
+                      {selectedCase.assigned_to ? `👤 ${selectedCase.assigned_to} (${getRoleLabel(selectedCase.assigned_role)})` : `👥 Unassigned (${getRoleLabel(selectedCase.assigned_role)} Queue)`}
                     </div>
                   </div>
 
@@ -1244,12 +1579,20 @@ function App() {
                   {/* Actions buttons based on status */}
                   <div>
                     <div className="details-section-title">Case Management Actions</div>
+                    {!canManageSelectedCase && selectedCase.status !== 'resolved' && (
+                      <div className="access-control-note">
+                        {isManagement
+                          ? 'Management has read-only oversight here. Switch to the routed operations role to update this case.'
+                          : `This case is routed to ${getRoleLabel(selectedCase.assigned_role)}. Your current role can review it, but cannot change its status.`}
+                      </div>
+                    )}
                     
                     <div className="action-buttons-grid">
                       {selectedCase.status === 'open' && (
                         <button 
-                          className="btn btn-primary"
+                          className={`btn ${canManageSelectedCase ? 'btn-primary' : 'btn-disabled'}`}
                           onClick={() => handleAcknowledge(selectedCase.id)}
+                          disabled={!canManageSelectedCase}
                         >
                           Acknowledge Case
                         </button>
@@ -1258,14 +1601,16 @@ function App() {
                       {selectedCase.status !== 'resolved' ? (
                         <>
                           <button 
-                            className="btn btn-warning"
+                            className={`btn ${canManageSelectedCase ? 'btn-warning' : 'btn-disabled'}`}
                             onClick={() => { setNoteType('escalate'); setCustomNote(''); }}
+                            disabled={!canManageSelectedCase}
                           >
                             Escalate Case
                           </button>
                           <button 
-                            className="btn btn-success"
+                            className={`btn ${canManageSelectedCase ? 'btn-success' : 'btn-disabled'}`}
                             onClick={() => { setNoteType('resolve'); setCustomNote(''); }}
+                            disabled={!canManageSelectedCase}
                           >
                             Resolve Case
                           </button>
@@ -1275,8 +1620,9 @@ function App() {
                       )}
                       
                       <button 
-                        className="btn btn-secondary btn-span-full"
+                        className={`btn ${canManageSelectedCase ? 'btn-secondary' : 'btn-disabled'} btn-span-full`}
                         onClick={() => { setNoteType('note'); setCustomNote(''); }}
+                        disabled={!canManageSelectedCase}
                       >
                         Add Timeline Note
                       </button>
