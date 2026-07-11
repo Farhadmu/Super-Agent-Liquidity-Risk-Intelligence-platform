@@ -1509,3 +1509,89 @@ header {
   padding-right: 0.5rem;
 }
 
+/* ============================================================
+   Mobile layout optimizations (Clean Organization)
+   ============================================================ */
+.header-dropdown-btn {
+  width: 100%;
+  text-align: center;
+  justify-content: center;
+}
+
+.header-dropdown-btn:not(:first-child) {
+  margin-top: 0.5rem;
+}
+
+.mobile-selector-container {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  width: 100%;
+}
+
+.mobile-selector-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.mobile-select-element {
+  width: 100%;
+  padding: 0.4rem 0.5rem;
+  border-radius: 0.5rem;
+  background: rgba(31, 41, 55, 0.8);
+  border: 1px solid var(--bg-card-border);
+  color: #fff;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.mobile-select-element:focus {
+  border-color: var(--color-accent);
+}
+
+.mobile-info-btn {
+  align-self: flex-end;
+  height: 34px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.modal-content-compact {
+  max-width: 400px !important;
+  padding: 1.5rem !important;
+}
+
+.agent-info-card-modal {
+  padding: 0.5rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.agent-info-name-modal {
+  font-size: 1.2rem;
+  margin-top: 0.25rem;
+}
+
+.agent-info-location-group-modal {
+  margin-top: 1rem;
+}
+
+.agent-info-location-modal {
+  font-size: 0.95rem;
+  margin-top: 0.25rem;
+}
+
+.agent-info-warning-modal {
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--bg-card-border);
+  padding-top: 0.75rem;
+}
+

@@ -294,10 +294,10 @@ function App() {
           </button>
           {showActionsDropdown && (
             <div className="glass-card header-dropdown-menu" onClick={e => e.stopPropagation()}>
-              <button className="btn btn-secondary" style={{ width: '100%' }} onClick={() => { setShowActionsDropdown(false); fetchValidationMetrics(); }}>
+              <button className="btn btn-secondary header-dropdown-btn" onClick={() => { setShowActionsDropdown(false); fetchValidationMetrics(); }}>
                 Validation Metrics
               </button>
-              <button className="btn btn-primary" style={{ width: '100%', marginTop: '0.5rem' }} onClick={() => { setShowActionsDropdown(false); triggerSeed(); }} disabled={loading}>
+              <button className="btn btn-primary header-dropdown-btn" onClick={() => { setShowActionsDropdown(false); triggerSeed(); }} disabled={loading}>
                 Reset / Seed Data
               </button>
             </div>
@@ -332,15 +332,15 @@ function App() {
             aria-label="Agent Location Info"
             onClick={() => setShowAgentInfoModal(false)}
           >
-            <div className="glass-card modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px', padding: '1.5rem' }}>
+            <div className="glass-card modal-content modal-content-compact" onClick={e => e.stopPropagation()}>
               <div className="modal-header">
                 <h3 className="details-title">Agent Details</h3>
                 <button className="btn btn-secondary" onClick={() => setShowAgentInfoModal(false)}>Close</button>
               </div>
-              <div className="agent-info-card" style={{ padding: '0.5rem 0' }}>
+              <div className="agent-info-card agent-info-card-modal">
                 <div>
                   <div className="agent-info-title">Agent Code & Name</div>
-                  <div className="agent-info-name" style={{ fontSize: '1.2rem', marginTop: '0.25rem' }}>
+                  <div className="agent-info-name agent-info-name-modal">
                     {agentOverview.agent_code} - {
                       agentOverview.agent_code === 'A001' ? 'Sajib Telecom' : 
                       agentOverview.agent_code === 'A002' ? 'Mayer Doa Enterprise' :
@@ -348,13 +348,13 @@ function App() {
                     }
                   </div>
                 </div>
-                <div style={{ marginTop: '1rem' }}>
+                <div className="agent-info-location-group-modal">
                   <div className="agent-info-title">Location</div>
-                  <div className="agent-info-location" style={{ fontSize: '0.95rem', marginTop: '0.25rem' }}>
+                  <div className="agent-info-location agent-info-location-modal">
                     📍 {agentOverview.area}, {agentOverview.thana}, {agentOverview.district}
                   </div>
                 </div>
-                <div className="agent-info-warning" style={{ marginTop: '1.5rem', borderTop: '1px solid var(--bg-card-border)', paddingTop: '0.75rem' }}>
+                <div className="agent-info-warning agent-info-warning-modal">
                   🚨 Provider boundaries strictly maintained. Balances never auto-settled or converted.
                 </div>
               </div>
@@ -460,14 +460,13 @@ function App() {
             <div className="sidebar">
               {/* Mobile-only Agent Selector and Info Button */}
               <div className="sidebar-mobile glass-card">
-                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', width: '100%' }}>
-                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <div className="mobile-selector-container">
+                  <div className="mobile-selector-group">
                     <label className="agent-selector-title" style={{ margin: 0 }}>Active Agent</label>
                     <select 
-                      className="filter-select"
+                      className="mobile-select-element"
                       value={selectedAgentId} 
                       onChange={e => setSelectedAgentId(Number(e.target.value))}
-                      style={{ width: '100%', padding: '0.4rem 0.5rem', borderRadius: '0.5rem', background: 'rgba(31, 41, 55, 0.8)' }}
                     >
                       {agentsList.map(a => (
                         <option key={a.id} value={a.id}>{a.code} - {a.name}</option>
@@ -475,9 +474,8 @@ function App() {
                     </select>
                   </div>
                   <button 
-                    className="btn btn-secondary" 
+                    className="btn btn-secondary mobile-info-btn" 
                     onClick={() => setShowAgentInfoModal(true)}
-                    style={{ alignSelf: 'flex-end', height: '34px', fontSize: '0.8rem', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
                   >
                     ℹ️ Info
                   </button>
