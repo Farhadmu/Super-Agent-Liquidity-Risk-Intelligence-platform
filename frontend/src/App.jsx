@@ -620,75 +620,79 @@ function App() {
                     <p className="empty-state-text">No active liquidity forecasts available.</p>
                   )}
 
-                  {agentForecasts && agentForecasts.forecasts && agentForecasts.forecasts.map((f, i) => {
-                    const hasRisk = f.risk_level !== 'low' || f.confidence < 0.3;
-                    return (
-                      <div key={i} className={`alert-card ${f.risk_level}`}>
-                        <div className="alert-card-header">
-                          <span className="alert-provider" style={{ color: f.provider_id ? f.display_color : '#fff' }}>
-                            {f.provider_name}
-                          </span>
-                          <span className={`alert-badge ${f.risk_level}`}>
-                            {f.risk_level === 'low' && f.confidence < 0.3 ? 'Uncertain / Lagging' : `${f.risk_level} Risk`}
-                          </span>
-                        </div>
-
-                        {f.eta_minutes !== null ? (
-                          <div className="alert-time">
-                            Shortage ETA: ~{f.eta_minutes} Mins
-                          </div>
-                        ) : (
-                          <div className="no-shortage-text">
-                            No impending shortage detected
-                          </div>
-                        )}
-
-                        {/* Bilingual Bangla alert for Scenario A or B */}
-                        {hasRisk && (
-                          <div className="alert-msg-bilingual">
-                            <span className="alert-msg-en">{f.reason}</span>
-                            {f.provider_name === 'bKash' && f.risk_level === 'high' && (
-                              <span className="alert-msg-bn">
-                                📣 বর্তমান লেনদেনের ধারা অনুযায়ী কয়েক মিনিটের মধ্যে আপনার বিকাশ ই-মানি শেষ হয়ে যেতে পারে। নিরাপদে সেবা চালু রাখতে অতিরিক্ত ই-মানি টপ-আপ করার পরামর্শ দেওয়া হচ্ছে।
+                  {agentForecasts && agentForecasts.forecasts && (
+                    <div className="scrollable-alerts-container">
+                      {agentForecasts.forecasts.map((f, i) => {
+                        const hasRisk = f.risk_level !== 'low' || f.confidence < 0.3;
+                        return (
+                          <div key={i} className={`alert-card ${f.risk_level}`}>
+                            <div className="alert-card-header">
+                              <span className="alert-provider" style={{ color: f.provider_id ? f.display_color : '#fff' }}>
+                                {f.provider_name}
                               </span>
-                            )}
-                            {f.provider_name === 'Shared Cash' && f.risk_level === 'high' && (
-                              <span className="alert-msg-bn">
-                                📣 বর্তমান লেনদেনের ধারা অনুযায়ী আপনার ড্রয়ারের নগদ টাকা শেষ হয়ে যেতে পারে। সবচেয়ে বেশি চাপ আসছে বিকাশ ক্যাশ-আউট থেকে। ২০,০০০+ টাকা অতিরিক্ত নগদ রিফিল করুন।
+                              <span className={`alert-badge ${f.risk_level}`}>
+                                {f.risk_level === 'low' && f.confidence < 0.3 ? 'Uncertain / Lagging' : `${f.risk_level} Risk`}
                               </span>
-                            )}
-                            {f.confidence < 0.3 && (
-                              <span className="alert-msg-bn">
-                                ⚠️ রকেট তথ্য সরবরাহে সাময়িক বিলম্ব হচ্ছে। সঠিক পূর্বাভাসের জন্য অপেক্ষা করা হচ্ছে, অনুগ্রহ করে সর্বশেষ ব্যাংক স্টেটমেন্ট দেখে সিদ্ধান্ত নিন।
-                              </span>
-                            )}
-                          </div>
-                        )}
+                            </div>
 
-                        <div className="alert-meta">
-                          <div>
-                            <div>Confidence Score</div>
-                            <div className="confidence-display">
-                              {(f.confidence * 100).toFixed(0)}%
-                              <div className="confidence-bar-container">
-                                <div 
-                                  className="confidence-bar" 
-                                  style={{ 
-                                    width: `${f.confidence * 100}%`, 
-                                    backgroundColor: f.confidence > 0.7 ? 'var(--color-success)' : f.confidence > 0.4 ? 'var(--color-warning)' : 'var(--color-danger)'
-                                  }}
-                                />
+                            {f.eta_minutes !== null ? (
+                              <div className="alert-time">
+                                Shortage ETA: ~{f.eta_minutes} Mins
+                              </div>
+                            ) : (
+                              <div className="no-shortage-text">
+                                No impending shortage detected
+                              </div>
+                            )}
+
+                            {/* Bilingual Bangla alert for Scenario A or B */}
+                            {hasRisk && (
+                              <div className="alert-msg-bilingual">
+                                <span className="alert-msg-en">{f.reason}</span>
+                                {f.provider_name === 'bKash' && f.risk_level === 'high' && (
+                                  <span className="alert-msg-bn">
+                                    📣 বর্তমান লেনদেনের ধারা অনুযায়ী কয়েক মিনিটের মধ্যে আপনার বিকাশ ই-মানি শেষ হয়ে যেতে পারে। নিরাপদে সেবা চালু রাখতে অতিরিক্ত ই-মানি টপ-আপ করার পরামর্শ দেওয়া হচ্ছে।
+                                  </span>
+                                )}
+                                {f.provider_name === 'Shared Cash' && f.risk_level === 'high' && (
+                                  <span className="alert-msg-bn">
+                                    📣 বর্তমান লেনদেনের ধারা অনুযায়ী আপনার ড্রয়ারের নগদ টাকা শেষ হয়ে যেতে পারে। সবচেয়ে বেশি চাপ আসছে বিকাশ ক্যাশ-আউট থেকে। ২০,০০০+ টাকা অতিরিক্ত নগদ রিফিল করুন।
+                                  </span>
+                                )}
+                                {f.confidence < 0.3 && (
+                                  <span className="alert-msg-bn">
+                                    ⚠️ রকেট তথ্য সরবরাহে সাময়িক বিলম্ব হচ্ছে। সঠিক পূর্বাভাসের জন্য অপেক্ষা করা হচ্ছে, অনুগ্রহ করে সর্বশেষ ব্যাংক স্টেটমেন্ট দেখে সিদ্ধান্ত নিন।
+                                  </span>
+                                )}
+                              </div>
+                            )}
+
+                            <div className="alert-meta">
+                              <div>
+                                <div>Confidence Score</div>
+                                <div className="confidence-display">
+                                  {(f.confidence * 100).toFixed(0)}%
+                                  <div className="confidence-bar-container">
+                                    <div 
+                                      className="confidence-bar" 
+                                      style={{ 
+                                        width: `${f.confidence * 100}%`, 
+                                        backgroundColor: f.confidence > 0.7 ? 'var(--color-success)' : f.confidence > 0.4 ? 'var(--color-warning)' : 'var(--color-danger)'
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="alert-meta-balance">
+                                <div>Current Balance</div>
+                                <div className="alert-meta-balance-value">{f.current_balance.toLocaleString()} BDT</div>
                               </div>
                             </div>
                           </div>
-                          <div className="alert-meta-balance">
-                            <div>Current Balance</div>
-                            <div className="alert-meta-balance-value">{f.current_balance.toLocaleString()} BDT</div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
 
                 {/* Active Anomaly Alerts */}
@@ -702,49 +706,51 @@ function App() {
                       No unusual behavioral activity detected in the last 2 hours.
                     </p>
                   ) : (
-                    agentAnomalies.map((a, i) => (
-                      <div key={i} className="alert-card" style={{ borderColor: 'rgba(239, 68, 68, 0.25)' }}>
-                        <div className="alert-card-header">
-                          <span className="alert-provider" style={{ color: a.display_color }}>
-                            {a.provider_name}
-                          </span>
-                          <span className="alert-badge" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: 'var(--color-danger)', border: '1px solid rgba(239,68,68,0.3)' }}>
-                            Requires Review
-                          </span>
-                        </div>
-
-                        <div>
-                          <div className="anomaly-pattern-label">
-                            Pattern: {a.pattern_type.replace(/_/g, ' ')}
-                          </div>
-                          <p className="anomaly-score-text">
-                            Decision Score: {(a.anomaly_score * 100).toFixed(1)}% (Confidence: {(a.confidence * 100).toFixed(0)}%)
-                          </p>
-                        </div>
-
-                        {/* Bilingual Bangla Warning for Scenario B */}
-                        {a.pattern_type === 'near_identical_amounts' && (
-                          <div className="alert-msg-bilingual" style={{ borderLeftColor: 'var(--color-danger)' }}>
-                            <span className="alert-msg-en">
-                              Alert: Detected cluster of near-identical cash-out amounts from a small group of accounts.
+                    <div className="scrollable-alerts-container">
+                      {agentAnomalies.map((a, i) => (
+                        <div key={i} className="alert-card" style={{ borderColor: 'rgba(239, 68, 68, 0.25)' }}>
+                          <div className="alert-card-header">
+                            <span className="alert-provider" style={{ color: a.display_color }}>
+                              {a.provider_name}
                             </span>
-                            <span className="alert-msg-bn">
-                              📣 গত ১২ মিনিটে স্বাভাবিকের তুলনায় অনেক বেশি ক্যাশ-আউট হয়েছে। কয়েকটি লেনদেনের পরিমাণ একই এবং অল্প কয়েকটি অ্যাকাউন্ট থেকে বারবার অনুরোধ এসেছে। বড় অঙ্কের নগদ পুনরায় সরবরাহের আগে পর্যালোচনা করুন।
+                            <span className="alert-badge" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: 'var(--color-danger)', border: '1px solid rgba(239,68,68,0.3)' }}>
+                              Requires Review
                             </span>
                           </div>
-                        )}
 
-                        <div className="details-section-title compact">Evidence Parameters</div>
-                        <div className="evidence-grid">
-                          <div>Tx ID: <span className="ev-value">#{a.evidence.transaction_id}</span></div>
-                          <div>Amount: <span className="ev-value">{a.evidence.amount} BDT</span></div>
-                          <div>Mean: <span className="ev-value">{a.evidence.historical_mean} BDT</span></div>
-                          <div>Dev: <span className="ev-danger">+{a.evidence.amount_deviation} BDT</span></div>
-                          <div>Velocity (10m): <span className="ev-value">{a.evidence.velocity_10m} tx</span></div>
-                          <div>Repetition (30m): <span className="ev-value">{a.evidence.counterparty_repetition_30m} tx</span></div>
+                          <div>
+                            <div className="anomaly-pattern-label">
+                              Pattern: {a.pattern_type.replace(/_/g, ' ')}
+                            </div>
+                            <p className="anomaly-score-text">
+                              Decision Score: {(a.anomaly_score * 100).toFixed(1)}% (Confidence: {(a.confidence * 100).toFixed(0)}%)
+                            </p>
+                          </div>
+
+                          {/* Bilingual Bangla Warning for Scenario B */}
+                          {a.pattern_type === 'near_identical_amounts' && (
+                            <div className="alert-msg-bilingual" style={{ borderLeftColor: 'var(--color-danger)' }}>
+                              <span className="alert-msg-en">
+                                Alert: Detected cluster of near-identical cash-out amounts from a small group of accounts.
+                              </span>
+                              <span className="alert-msg-bn">
+                                📣 গত ১২ মিনিটে স্বাভাবিকের তুলনায় অনেক বেশি ক্যাশ-আউট হয়েছে। কয়েকটি লেনদেনের পরিমাণ একই এবং অল্প কয়েকটি অ্যাকাউন্ট থেকে বারবার অনুরোধ এসেছে। বড় অঙ্কের নগদ পুনরায় সরবরাহের আগে পর্যালোচনা করুন।
+                              </span>
+                            </div>
+                          )}
+
+                          <div className="details-section-title compact">Evidence Parameters</div>
+                          <div className="evidence-grid">
+                            <div>Tx ID: <span className="ev-value">#{a.evidence.transaction_id}</span></div>
+                            <div>Amount: <span className="ev-value">{a.evidence.amount} BDT</span></div>
+                            <div>Mean: <span className="ev-value">{a.evidence.historical_mean} BDT</span></div>
+                            <div>Dev: <span className="ev-danger">+{a.evidence.amount_deviation} BDT</span></div>
+                            <div>Velocity (10m): <span className="ev-value">{a.evidence.velocity_10m} tx</span></div>
+                            <div>Repetition (30m): <span className="ev-value">{a.evidence.counterparty_repetition_30m} tx</span></div>
+                          </div>
                         </div>
-                      </div>
-                    ))
+                      ))}
+                    </div>
                   )}
                 </div>
               </div>

@@ -1455,3 +1455,13 @@ header {
     padding: 0.5rem 0.5rem;
   }
 }
+
+/* ============================================================
+   Scrollable Alerts Container
+   ============================================================ */
+.scrollable-alerts-container {
+  max-height: 480px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
