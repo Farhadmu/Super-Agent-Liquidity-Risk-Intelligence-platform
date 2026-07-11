@@ -88,6 +88,12 @@ header {
   z-index: 100;
 }
 
+.header-brand-row {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
 .logo-container {
   display: flex;
   align-items: center;
@@ -1307,12 +1313,17 @@ header {
     gap: 1rem;
     padding: 1rem;
     align-items: center;
-    text-align: center;
+  }
+  .header-brand-row {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
   .logo-container {
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    gap: 0.25rem;
+    gap: 0.75rem;
   }
   .view-toggle {
     width: 100%;
@@ -1321,15 +1332,6 @@ header {
   .view-toggle .toggle-btn {
     flex: 1;
     text-align: center;
-  }
-  header > div:last-child {
-    width: 100%;
-    justify-content: center;
-    gap: 0.5rem;
-  }
-  header > div:last-child .btn {
-    flex: 1;
-    font-size: 0.8rem;
   }
 }
 
@@ -1595,3 +1597,466 @@ header {
   padding-top: 0.75rem;
 }
 
+/* ============================================================
+   Small-device UX polish only
+   ============================================================ */
+@media (max-width: 640px) {
+  body {
+    background-attachment: scroll;
+  }
+
+  header {
+    gap: 0.7rem;
+    padding: 0.7rem 0.85rem;
+  }
+
+  .logo-container {
+    width: 100%;
+    flex-direction: row;
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  .logo-icon {
+    flex: 0 0 2rem;
+    border-radius: 0.65rem;
+  }
+
+  .logo-subtitle {
+    display: block;
+    max-width: 15rem;
+    line-height: 1.2;
+  }
+
+  .view-toggle {
+    width: 100%;
+    border-radius: 0.9rem;
+    gap: 0.2rem;
+  }
+
+  .toggle-btn {
+    min-height: 2.55rem;
+    padding: 0.55rem 0.45rem;
+    line-height: 1.15;
+  }
+
+  .header-actions-mobile {
+    width: 100%;
+  }
+
+  .header-actions-mobile > .btn {
+    width: 100%;
+    min-height: 2.55rem;
+  }
+
+  .header-dropdown-menu {
+    left: 0;
+    right: 0;
+    top: calc(100% + 0.45rem);
+    min-width: 0;
+    width: 100%;
+    padding: 0.6rem;
+    border-radius: 0.9rem;
+  }
+
+  .header-dropdown-btn {
+    min-height: 2.7rem;
+  }
+
+  .main-content {
+    padding: 0.85rem;
+  }
+
+  .agent-grid,
+  .dashboard-main,
+  .sidebar {
+    gap: 1rem;
+  }
+
+  .glass-card {
+    padding: 1rem;
+    border-radius: 0.95rem;
+  }
+
+  .sidebar-mobile.glass-card {
+    position: sticky;
+    top: 11.25rem;
+    z-index: 20;
+    background: rgba(11, 15, 25, 0.92);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+  }
+
+  .mobile-selector-container {
+    align-items: stretch;
+    gap: 0.55rem;
+  }
+
+  .mobile-select-element {
+    min-height: 2.65rem;
+    padding: 0.55rem 0.7rem;
+    border-radius: 0.75rem;
+    font-size: 0.88rem;
+  }
+
+  .mobile-info-btn {
+    height: auto;
+    min-height: 2.65rem;
+    align-self: flex-end;
+    padding-inline: 0.75rem;
+    border-radius: 0.75rem;
+  }
+
+  .section-heading {
+    margin-bottom: 0.75rem;
+    font-size: 1.2rem;
+  }
+
+  .balance-grid {
+    gap: 0.75rem;
+  }
+
+  .balance-card {
+    min-height: 7rem;
+    padding-left: 1.15rem;
+  }
+
+  .balance-card::before {
+    width: 3px;
+  }
+
+  .balance-label {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 0.35rem;
+    font-size: 0.72rem;
+    line-height: 1.25;
+  }
+
+  .balance-amount {
+    font-size: 1.45rem;
+    line-height: 1.1;
+    letter-spacing: 0;
+  }
+
+  .balance-currency {
+    display: inline-block;
+    font-size: 0.78rem;
+  }
+
+  .balance-update {
+    gap: 0.5rem;
+    align-items: flex-start;
+    line-height: 1.3;
+  }
+
+  .forecast-section {
+    gap: 1rem;
+  }
+
+  .alert-panel-title {
+    margin-bottom: 0.9rem;
+    align-items: flex-start;
+    line-height: 1.25;
+  }
+
+  .scrollable-alerts-container {
+    max-height: none;
+    overflow-y: visible;
+    padding-right: 0;
+  }
+
+  .alert-card {
+    padding: 0.9rem;
+    border-radius: 0.85rem;
+    gap: 0.65rem;
+  }
+
+  .alert-card-header {
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .alert-provider {
+    min-width: 0;
+    line-height: 1.25;
+  }
+
+  .alert-badge {
+    flex-shrink: 0;
+    max-width: 9rem;
+    text-align: center;
+    line-height: 1.15;
+  }
+
+  .alert-time {
+    font-size: 1.18rem;
+    line-height: 1.15;
+  }
+
+  .alert-msg-bilingual {
+    padding: 0.7rem;
+    border-radius: 0.65rem;
+  }
+
+  .alert-msg-en,
+  .alert-msg-bn {
+    font-size: 0.82rem;
+    line-height: 1.45;
+  }
+
+  .alert-meta {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.7rem;
+    padding-top: 0.2rem;
+  }
+
+  .alert-meta-balance {
+    text-align: left;
+  }
+
+  .confidence-display {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .confidence-bar-container {
+    flex: 1;
+    width: auto;
+    min-width: 7rem;
+    max-width: 12rem;
+  }
+
+  .evidence-grid {
+    grid-template-columns: 1fr;
+    gap: 0.45rem;
+    padding: 0.65rem;
+  }
+
+  .ops-header-card {
+    margin-bottom: 1rem;
+  }
+
+  .filter-bar {
+    margin-bottom: 0;
+  }
+
+  .filter-bar > div {
+    width: 100%;
+  }
+
+  .filter-label {
+    margin-bottom: 0.35rem;
+  }
+
+  .filter-select {
+    min-height: 2.65rem;
+    border-radius: 0.75rem;
+  }
+
+  .acting-as-container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.35rem;
+    padding: 0.65rem;
+  }
+
+  .acting-as-label {
+    color: var(--text-muted);
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.72rem;
+  }
+
+  .acting-as-select {
+    background: rgba(17, 24, 39, 0.72);
+    border: 1px solid var(--bg-card-border);
+    padding: 0.55rem 0.7rem;
+    border-radius: 0.65rem;
+  }
+
+  .case-queue-list {
+    max-height: 28rem;
+    gap: 0.75rem;
+  }
+
+  .case-card {
+    padding: 0.9rem;
+    border-radius: 0.85rem;
+  }
+
+  .case-card-meta {
+    gap: 0.35rem 0.55rem;
+    font-size: 0.74rem;
+    line-height: 1.25;
+  }
+
+  .case-card-title {
+    font-size: 0.98rem;
+    line-height: 1.25;
+  }
+
+  .case-routed-text {
+    line-height: 1.3;
+  }
+
+  .case-card-actions {
+    padding-top: 0.65rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .case-card-status {
+    padding: 0.35rem 0.55rem;
+    line-height: 1;
+  }
+
+  .details-card {
+    gap: 0.9rem;
+  }
+
+  .details-header {
+    gap: 0.7rem;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.85rem;
+  }
+
+  .details-title {
+    line-height: 1.2;
+  }
+
+  .details-section-title {
+    margin: 0.9rem 0 0.45rem;
+    font-size: 0.74rem;
+  }
+
+  .recommended-action-box {
+    padding: 0.8rem;
+    font-size: 0.84rem;
+    border-left-width: 3px;
+  }
+
+  .action-buttons-grid {
+    gap: 0.6rem;
+  }
+
+  .btn {
+    min-height: 2.7rem;
+    padding: 0.7rem 0.85rem;
+    border-radius: 0.75rem;
+    line-height: 1.15;
+  }
+
+  .note-input-container {
+    padding: 0.8rem;
+  }
+
+  .note-header {
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .input-textarea {
+    min-height: 6rem;
+    height: 6rem;
+    font-size: 0.9rem;
+  }
+
+  .timeline-container {
+    gap: 0.75rem;
+    padding-left: 1rem;
+  }
+
+  .timeline-dot {
+    left: -1rem;
+  }
+
+  .timeline-meta {
+    gap: 0.2rem;
+    line-height: 1.25;
+  }
+
+  .timeline-note {
+    padding: 0.65rem;
+    font-size: 0.82rem;
+    line-height: 1.4;
+  }
+
+  .modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .modal-content {
+    width: 100%;
+    max-width: none;
+    max-height: 88vh;
+    border-radius: 1.1rem 1.1rem 0 0;
+    padding: 1rem;
+  }
+
+  .modal-header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--bg-main);
+    margin: -1rem -1rem 1rem;
+    padding: 1rem;
+    border-bottom: 1px solid var(--bg-card-border);
+  }
+
+  .metrics-report {
+    gap: 1rem;
+  }
+
+  .metrics-section-title {
+    font-size: 0.92rem;
+    line-height: 1.25;
+  }
+
+  .metric-row {
+    align-items: flex-start;
+    gap: 0.45rem;
+    padding: 0.65rem 0;
+  }
+
+  .metric-value {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo-subtitle {
+    max-width: 12.5rem;
+  }
+
+  .main-content {
+    padding: 0.7rem;
+  }
+
+  .mobile-selector-container {
+    flex-direction: column;
+  }
+
+  .mobile-info-btn {
+    width: 100%;
+  }
+
+  .balance-card {
+    min-height: 6.5rem;
+  }
+
+  .case-queue-list {
+    max-height: 24rem;
+  }
+
+  .modal-header {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .modal-header .btn {
+    min-height: 2.35rem;
+    padding: 0.55rem 0.75rem;
+  }
+}

@@ -251,15 +251,39 @@ function App() {
   return (
     <>
       <header>
-        <div className="logo-container">
-          <div className="logo-icon">Ω</div>
-          <div>
-            <h1 className="logo-text">SUPER-AGENT</h1>
-            <span className="logo-subtitle">
-              MULTI-PROVIDER COORDINATION PORTAL
-            </span>
+        <div className="header-brand-row">
+          <div className="logo-container">
+            <div className="logo-icon">Ω</div>
+            <div>
+              <h1 className="logo-text">SUPER-AGENT</h1>
+              <span className="logo-subtitle">
+                MULTI-PROVIDER COORDINATION PORTAL
+              </span>
+            </div>
+          </div>
+
+          <div className="header-actions-mobile">
+            <button 
+              className="btn btn-secondary" 
+              onClick={() => setShowActionsDropdown(!showActionsDropdown)}
+              aria-expanded={showActionsDropdown}
+              aria-label="Toggle Actions Menu"
+            >
+              ⚙️ Tools
+            </button>
+            {showActionsDropdown && (
+              <div className="glass-card header-dropdown-menu" onClick={e => e.stopPropagation()}>
+                <button className="btn btn-secondary header-dropdown-btn" onClick={() => { setShowActionsDropdown(false); fetchValidationMetrics(); }}>
+                  Validation Metrics
+                </button>
+                <button className="btn btn-primary header-dropdown-btn" onClick={() => { setShowActionsDropdown(false); triggerSeed(); }} disabled={loading}>
+                  Reset / Seed Data
+                </button>
+              </div>
+            )}
           </div>
         </div>
+
         <div className="view-toggle">
           <button 
             className={`toggle-btn ${activeTab === 'agent' ? 'active' : ''}`}
@@ -281,27 +305,6 @@ function App() {
           <button className="btn btn-primary" onClick={triggerSeed} disabled={loading}>
             Reset / Seed Data
           </button>
-        </div>
-
-        <div className="header-actions-mobile">
-          <button 
-            className="btn btn-secondary" 
-            onClick={() => setShowActionsDropdown(!showActionsDropdown)}
-            aria-expanded={showActionsDropdown}
-            aria-label="Toggle Actions Menu"
-          >
-            ⚙️ Tools
-          </button>
-          {showActionsDropdown && (
-            <div className="glass-card header-dropdown-menu" onClick={e => e.stopPropagation()}>
-              <button className="btn btn-secondary header-dropdown-btn" onClick={() => { setShowActionsDropdown(false); fetchValidationMetrics(); }}>
-                Validation Metrics
-              </button>
-              <button className="btn btn-primary header-dropdown-btn" onClick={() => { setShowActionsDropdown(false); triggerSeed(); }} disabled={loading}>
-                Reset / Seed Data
-              </button>
-            </div>
-          )}
         </div>
       </header>
 
