@@ -1906,9 +1906,24 @@ header {
    Scrollable Alerts Container
    ============================================================ */
 .scrollable-alerts-container {
-  max-height: none;
-  overflow: visible;
-  padding-right: 0;
+  max-height: 520px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.scrollable-alerts-container::-webkit-scrollbar {
+  width: 6px;
+}
+.scrollable-alerts-container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 3px;
+}
+.scrollable-alerts-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+.scrollable-alerts-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
 }
 
 /* ============================================================
@@ -2317,9 +2332,9 @@ header {
   }
 
   .scrollable-alerts-container {
-    max-height: none;
-    overflow-y: visible;
-    padding-right: 0;
+    max-height: 380px;
+    overflow-y: auto;
+    padding-right: 0.35rem;
   }
 
   .alert-card {
