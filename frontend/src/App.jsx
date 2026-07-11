@@ -224,7 +224,6 @@ function App() {
   const [agentOverview, setAgentOverview] = useState(null);
   const [agentForecasts, setAgentForecasts] = useState(null);
   const [agentAnomalies, setAgentAnomalies] = useState([]);
-  const [agentRebalance, setAgentRebalance] = useState(null);
   
   // Ops State
   const [cases, setCases] = useState([]);
@@ -241,14 +240,7 @@ function App() {
   const [metrics, setMetrics] = useState(null);
   const [showMetrics, setShowMetrics] = useState(false);
   
-  // AI Advisor Playground State
-  const [showPlaygroundModal, setShowPlaygroundModal] = useState(false);
-  const [playgroundContext, setPlaygroundContext] = useState('liquidity');
-  const [playgroundPrompt, setPlaygroundPrompt] = useState(
-    'You are the AI Risk and Liquidity Advisor. Write a trilingual warning explaining a liquidity depletion/shortage warning.'
-  );
-  const [playgroundResult, setPlaygroundResult] = useState(null);
-  const [playgroundLoading, setPlaygroundLoading] = useState(false);
+
   
   // Seeding State
   const [seedMessage, setSeedMessage] = useState('');
@@ -365,9 +357,7 @@ function App() {
       const anomalies = await anomalyRes.json();
       setAgentAnomalies(anomalies);
 
-      const rebalanceRes = await fetch(`${API_BASE}/agents/${id}/rebalance`);
-      const rebalance = await rebalanceRes.json();
-      setAgentRebalance(rebalance);
+
 
       setError(null);
     } catch (err) {
@@ -640,30 +630,7 @@ function App() {
     }
   };
 
-  const handleGeneratePlaygroundPreview = async () => {
-    try {
-      setPlaygroundLoading(true);
-      const res = await fetch(`${API_BASE}/simulate/advisory-preview`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          custom_system_prompt: playgroundPrompt,
-          context_type: playgroundContext
-        })
-      });
-      const data = await res.json();
-      setPlaygroundResult(data);
-    } catch (err) {
-      console.error("Error generating advisory preview:", err);
-      setPlaygroundResult({
-        en: "Error calling AI Advisor endpoint. Make sure your GEMINI_API_KEY is configured in .env.",
-        bn: "সার্ভার সংযোগে ত্রুটি ঘটেছে। দয়া করে আপনার এপিআই কী পরীক্ষা করুন।",
-        banglish: "Server e call fail koreche. Env file check korun."
-      });
-    } finally {
-      setPlaygroundLoading(false);
-    }
-  };
+
 
   const triggerSeed = async () => {
     try {
@@ -915,57 +882,12 @@ function App() {
     <>
       <TooltipOverlay />
       <header role="banner">
-        <div className="header-brand-row">
-          {/* Logo */}
-          <div className="logo-container">
-            <div className="logo-icon" aria-hidden="true">Ω</div>
-            <div>
-              <h1 className="logo-text">SUPER-AGENT</h1>
-              <span className="logo-subtitle">Multi-Provider Coordination</span>
-            </div>
-          </div>
-
-          {/* Mobile: tools dropdown */}
-          <div className="header-actions-mobile">
-            <button
-              className="btn btn-secondary"
-              onClick={() => setShowActionsDropdown(!showActionsDropdown)}
-              aria-expanded={showActionsDropdown}
-              aria-label="Toggle Actions Menu"
-            >
-              ☰ Menu
-            </button>
-            {showActionsDropdown && (
-              <div className="header-dropdown-menu" role="menu" onClick={e => e.stopPropagation()}>
-                <div className="header-user-card mobile">
-                  <span className="header-user-name">{currentUser.name}</span>
-                  <span className="header-user-role">{currentUser.roleLabel}</span>
-                </div>
-                <button
-                  className="btn btn-secondary header-dropdown-btn"
-                  onClick={() => { toggleTheme(); setShowActionsDropdown(false); }}
-                  role="menuitem"
-                >
-                  {theme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode'}
-                </button>
-                {isManagement && (
-                  <>
-                    <button className="btn btn-secondary header-dropdown-btn" onClick={() => { setShowActionsDropdown(false); fetchValidationMetrics(); }} role="menuitem">
-                      📊 Validation Metrics
-                    </button>
-                    <button className="btn btn-secondary header-dropdown-btn" onClick={() => { setShowActionsDropdown(false); setShowPlaygroundModal(true); }} role="menuitem">
-                      🗣️ AI Playground
-                    </button>
-                  </>
-                )}
-                <button className="btn btn-primary header-dropdown-btn" onClick={() => { setShowActionsDropdown(false); triggerSeed(); }} disabled={loading} role="menuitem">
-                  {loading ? '⏳ Loading...' : '🔄 Reset / Seed Data'}
-                </button>
-                <button className="btn btn-secondary header-dropdown-btn" onClick={handleLogout} role="menuitem">
-                  ↩ Switch Role
-                </button>
-              </div>
-            )}
+        {/* Brand Logo - Left */}
+        <div className="logo-container">
+          <div className="logo-icon" aria-hidden="true">Ω</div>
+          <div>
+            <h1 className="logo-text">SUPER-AGENT</h1>
+            <span className="logo-subtitle">Multi-Provider Coordination</span>
           </div>
         </div>
 
@@ -993,12 +915,8 @@ function App() {
           </button>
         </div>
 
-        {/* Desktop: right actions */}
-        <div className="header-actions-desktop">
-          <div className="header-user-card">
-            <span className="header-user-name">{currentUser.name}</span>
-            <span className="header-user-role">{currentUser.roleLabel}</span>
-          </div>
+        {/* Right side header actions: Theme Toggle + Profile dropdown avatar */}
+        <div className="header-right-actions">
           <button
             className="theme-toggle-btn"
             onClick={toggleTheme}
@@ -1007,22 +925,51 @@ function App() {
           >
             {theme === 'dark' ? '☀️' : '🌙'}
           </button>
-          {isManagement && (
-            <>
-              <button className="btn btn-secondary" onClick={fetchValidationMetrics}>
-                📊 Metrics
-              </button>
-              <button className="btn btn-secondary" onClick={() => setShowPlaygroundModal(true)}>
-                🗣️ AI Playground
-              </button>
-            </>
-          )}
-          <button className="btn btn-primary" onClick={triggerSeed} disabled={loading}>
-            {loading ? '⏳' : '🔄'} Reset Data
-          </button>
-          <button className="btn btn-secondary" onClick={handleLogout}>
-            ↩ Switch Role
-          </button>
+          
+          {/* Profile Dropdown Avatar */}
+          <div className="profile-dropdown-container">
+            <div className="profile-avatar-trigger" tabIndex={0} aria-label="User Profile details">
+              {currentUser.name.charAt(0).toUpperCase()}
+            </div>
+            
+            <div className="profile-dropdown-menu">
+              <div className="profile-menu-header">
+                <div className="profile-menu-avatar">
+                  {currentUser.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="profile-menu-info">
+                  <div className="profile-menu-name">{currentUser.name}</div>
+                  <div className="profile-menu-role">{currentUser.roleLabel}</div>
+                </div>
+              </div>
+              
+              <div className="profile-menu-divider" />
+              
+              <div className="profile-menu-actions">
+                {isManagement && (
+                  <button 
+                    className="btn btn-secondary profile-action-btn" 
+                    onClick={fetchValidationMetrics}
+                  >
+                    📊 Metrics Report
+                  </button>
+                )}
+                <button 
+                  className="btn btn-primary profile-action-btn" 
+                  onClick={triggerSeed} 
+                  disabled={loading}
+                >
+                  {loading ? '⏳ Loading...' : '🔄 Reset / Seed Data'}
+                </button>
+                <button 
+                  className="btn btn-secondary profile-action-btn" 
+                  onClick={handleLogout}
+                >
+                  ↩ Switch User Role
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -1185,123 +1132,7 @@ function App() {
           </div>
         )}
 
-        {/* Interactive LLM Advisor Playground Modal */}
-        {showPlaygroundModal && (
-          <div
-            className="modal-overlay"
-            role="dialog"
-            aria-modal="true"
-            aria-label="AI Advisor Playground"
-            onClick={() => setShowPlaygroundModal(false)}
-          >
-            <div className="glass-card modal-content" style={{ maxWidth: '850px', width: '90%' }} onClick={(e) => e.stopPropagation()}>
-              <div className="modal-header" style={{ marginBottom: '1.25rem' }}>
-                <div>
-                  <h2 className="details-title">🗣️ Interactive AI Advisor Playground</h2>
-                  <p className="details-subtitle" style={{ margin: 0 }}>
-                    Tweak system instructions, adjust context parameters, and preview trilingual LLM outputs side-by-side.
-                  </p>
-                </div>
-                <button className="btn btn-secondary" onClick={() => setShowPlaygroundModal(false)}>Close</button>
-              </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem', maxHeight: '70vh', overflowY: 'auto', paddingRight: '0.5rem' }}>
-                {/* Inputs card */}
-                <div className="glass-card" style={{ background: 'rgba(0,0,0,0.15)', border: '1px solid var(--border-card)', borderRadius: 'var(--radius-md)', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
-                    <div style={{ flex: 1, minWidth: '180px' }}>
-                      <label style={{ display: 'block', fontSize: '0.78rem', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '0.4rem', fontWeight: 'bold' }}>Simulation Context</label>
-                      <select 
-                        className="mobile-select-element"
-                        style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '0.45rem 0.65rem', borderRadius: '0.5rem', width: '100%', minHeight: '2.3rem' }}
-                        value={playgroundContext}
-                        onChange={(e) => {
-                          const ctx = e.target.value;
-                          setPlaygroundContext(ctx);
-                          setPlaygroundPrompt(ctx === 'liquidity' 
-                            ? 'You are the AI Risk and Liquidity Advisor. Write a trilingual warning explaining a liquidity depletion/shortage warning.' 
-                            : 'You are the AI Risk and Liquidity Advisor. Write a trilingual warning explaining a transaction behavioral anomaly flag.'
-                          );
-                        }}
-                      >
-                        <option value="liquidity">Liquidity Shortage Alert (Standard / Low / High)</option>
-                        <option value="anomaly">Behavioral Risk Flag (Velocity / Deviation)</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.78rem', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '0.4rem', fontWeight: 'bold' }}>Custom System / Prompt Instructions</label>
-                    <textarea
-                      style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '0.75rem', borderRadius: '0.5rem', width: '100%', minHeight: '80px', fontFamily: 'inherit', fontSize: '0.85rem', resize: 'vertical', lineHeight: 1.4 }}
-                      value={playgroundPrompt}
-                      onChange={(e) => setPlaygroundPrompt(e.target.value)}
-                      placeholder="Enter custom prompt instructions for the LLM..."
-                    />
-                  </div>
-
-                  <button 
-                    className="btn btn-primary" 
-                    style={{ alignSelf: 'flex-start', minHeight: '2.4rem', padding: '0 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                    onClick={handleGeneratePlaygroundPreview}
-                    disabled={playgroundLoading}
-                  >
-                    {playgroundLoading ? (
-                      <>
-                        <div className="loading-spinner" style={{ width: '14px', height: '14px', borderWeight: '2px' }} />
-                        <span>Querying LLM Advisor...</span>
-                      </>
-                    ) : (
-                      <>
-                        <span>⚡ Generate Trilingual Output</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-
-                {/* Outputs Display side-by-side */}
-                {playgroundResult && (
-                  <div>
-                    <h3 className="metrics-section-title" style={{ fontSize: '0.85rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      ✨ Real-Time Generated Translation Output
-                    </h3>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                      {/* English */}
-                      <div className="glass-card" style={{ background: 'rgba(59,130,246,0.04)', border: '1px solid rgba(59,130,246,0.15)', borderRadius: 'var(--radius-md)', padding: '1rem' }}>
-                        <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#60a5fa', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                          <span>🇬🇧 English Advisory</span>
-                        </div>
-                        <p style={{ fontSize: '0.83rem', lineHeight: 1.45, color: 'var(--text-primary)', margin: 0 }}>
-                          {playgroundResult.en}
-                        </p>
-                      </div>
-
-                      {/* Bangla */}
-                      <div className="glass-card" style={{ background: 'rgba(16,185,129,0.04)', border: '1px solid rgba(16,185,129,0.15)', borderRadius: 'var(--radius-md)', padding: '1rem' }}>
-                        <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#34d399', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                          <span>🇧🇩 Bangla translation</span>
-                        </div>
-                        <p style={{ fontSize: '0.83rem', lineHeight: 1.45, color: 'var(--text-primary)', margin: 0 }}>
-                          {playgroundResult.bn}
-                        </p>
-                      </div>
-
-                      {/* Banglish */}
-                      <div className="glass-card" style={{ background: 'rgba(245,158,11,0.04)', border: '1px solid rgba(245,158,11,0.15)', borderRadius: 'var(--radius-md)', padding: '1rem' }}>
-                        <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#fbbf24', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                          <span>🗣️ Banglish translation</span>
-                        </div>
-                        <p style={{ fontSize: '0.83rem', lineHeight: 1.45, color: 'var(--text-primary)', margin: 0 }}>
-                          {playgroundResult.banglish}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Tab 1: Agent Dashboard */}
         {activeTab === 'agent' && (
@@ -1864,42 +1695,7 @@ function App() {
                 </div>
               )}
 
-              {/* Smart Rebalancing Recommendations */}
-              {agentRebalance && agentRebalance.recommendations && agentRebalance.recommendations.length > 0 && (
-                <div className="glass-card rebalance-banner fade-in" style={{ marginBottom: '1.5rem', borderLeft: '4px solid var(--color-brand)' }}>
-                  <h3 className="alert-panel-title" style={{ marginBottom: '0.65rem', display: 'flex', alignItems: 'center', width: '100%' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <span style={{ color: 'var(--color-brand-alt)' }}>⚖️</span> Automated Rebalancing Advice
-                      <HelpDot text="Proactive recommendations to optimize e-money balances and physical cash box distribution." />
-                    </div>
-                  </h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                    {agentRebalance.recommendations.map((rec, i) => (
-                      <div key={i} className="rebalance-item" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-card)', borderRadius: 'var(--radius-md)', padding: '0.85rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-                        <div style={{ flex: 1, minWidth: '240px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                            <span className="status-chip" style={{ background: rec.urgency === 'high' ? 'rgba(239,68,68,0.12)' : rec.urgency === 'medium' ? 'rgba(245,158,11,0.12)' : 'rgba(16,185,129,0.12)', color: rec.urgency === 'high' ? 'var(--color-danger)' : rec.urgency === 'medium' ? 'var(--color-warning)' : 'var(--color-success)', textTransform: 'uppercase', fontSize: '0.65rem', fontWeight: 'bold', padding: '0.15rem 0.4rem', borderRadius: '0.25rem' }}>
-                              {rec.type.replace(/_/g, ' ')}
-                            </span>
-                            {rec.from_pool && (
-                              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                                {rec.from_pool} → {rec.to_pool}
-                              </span>
-                            )}
-                          </div>
-                          <p style={{ fontSize: '0.83rem', color: 'var(--text-primary)', lineHeight: 1.45 }}>{rec.action_text}</p>
-                        </div>
-                        {rec.suggested_amount > 0 && (
-                          <div style={{ textAlign: 'right' }}>
-                            <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700 }}>Suggested Amount</div>
-                            <strong style={{ fontSize: '1.1rem', color: 'var(--color-brand-alt)' }}>{rec.suggested_amount.toLocaleString()} BDT</strong>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+
 
               {/* Forecast and Anomaly alerts */}
               <div className="forecast-section">
