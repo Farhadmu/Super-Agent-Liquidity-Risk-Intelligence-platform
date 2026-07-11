@@ -251,6 +251,7 @@ function App() {
   const actorRole = currentUser?.role || 'viewer';
   const selectedLoginUser = DEMO_USERS.find(user => user.id === loginRoleId) || DEMO_USERS[0];
   const isManagement = actorRole === 'management';
+  const isOpsRestricted = actorRole !== 'management' && actorRole !== 'admin';
   const visibleAgents = currentUser?.role === 'agent'
     ? agentsList.filter(agent => agent.id === currentUser.agentId)
     : agentsList;
@@ -1765,11 +1766,22 @@ function App() {
                   </div>
                   <div>
                     <label className="filter-label">Assigned Role</label>
-                    <select className="filter-select" value={filterRole} onChange={e => setFilterRole(e.target.value)}>
-                      <option value="">All Roles</option>
-                      <option value="provider_ops">Provider Operations</option>
-                      <option value="field_officer">Field Officer</option>
-                      <option value="risk_analyst">Risk Analyst</option>
+                    <select 
+                      className="filter-select" 
+                      value={filterRole} 
+                      onChange={e => setFilterRole(e.target.value)}
+                      disabled={isOpsRestricted}
+                    >
+                      {isOpsRestricted ? (
+                        <option value={currentUser.role}>{getRoleLabel(currentUser.role)}</option>
+                      ) : (
+                        <>
+                          <option value="">All Roles</option>
+                          <option value="provider_ops">Provider Operations</option>
+                          <option value="field_officer">Field Officer</option>
+                          <option value="risk_analyst">Risk Analyst</option>
+                        </>
+                      )}
                     </select>
                   </div>
 
@@ -1837,7 +1849,17 @@ function App() {
             {/* Right side: Selected Case Detail pane */}
             <div>
               {selectedCase ? (
-                <div className="glass-card details-card">
+                isOpsRestricted && selectedCase.assigned_role !== currentUser.role ? (
+                  <div className="glass-card details-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3.5rem 2rem', gap: '1rem', border: '1px solid rgba(239, 68, 68, 0.2)', textAlign: 'center' }}>
+                    <div style={{ fontSize: '3rem' }}>🔒</div>
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#EF4444', margin: 0 }}>Access Scoped</h3>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.4' }}>
+                      This case is routed to the <strong>{getRoleLabel(selectedCase.assigned_role)}</strong> department. 
+                      Your account role is restricted to reviewing <strong>{getRoleLabel(currentUser.role)}</strong> cases only.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="glass-card details-card">
                   <div className="details-header">
                     <div>
                       <h2 className="details-title">
@@ -1986,7 +2008,8 @@ function App() {
                     </div>
                   </div>
 
-                </div>
+                  </div>
+                )
               ) : (
                 <div className="glass-card empty-state-card">
                   <p className="empty-state-text">Select a case from the queue to view details and coordinate.</p>
