@@ -178,7 +178,7 @@ def apply_custom_scenario(payload: CustomScenarioInput, db: Session = Depends(ge
         "status": "success",
         "message": f"Custom scenario applied for Agent {agent.agent_code}.",
         "details": {
-            "shared_cash": float(agent.shared_cash),
+            "shared_cash": float(payload.shared_cash),
             "injected_transactions": len(injected_txs),
             "flagged_anomalies": flagged_count
         }
