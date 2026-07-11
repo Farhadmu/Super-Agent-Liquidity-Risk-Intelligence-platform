@@ -60,7 +60,7 @@ LOCAL_FALLBACKS = {
         },
         "Shared Cash": {
             "en": "Depletion warning: High cash depletion risk for Shared Cash pool box. Refill recommended.",
-            "bn": "📣 বর্তমান লেনদেনের ধারা অনুযায়ী আপনার ড্রয়ারের নগদ টাকা দ্রুত কমতে পারে। নিরাপদভাবে সেবা চালু রাখতে অনুমোদিত ফিল্ড সাপোর্টের মাধ্যমে নগদ সহায়তা সমন্বয় করুন।",
+            "bn": "📣 বর্তমান লেনদেনের ধারা অনুযায়ী বিকেল ৫টা ২০ মিনিটের মধ্যে আপনার নগদ টাকা শেষ হয়ে যেতে পারে। সবচেয়ে বেশি চাপ আসছে বিকাশ ক্যাশ-আউট থেকে। নিরাপদভাবে সেবা চালু রাখতে কমপক্ষে ২০,০০০ টাকা অতিরিক্ত নগদ ব্যবস্থা করার পরামর্শ দেওয়া হচ্ছে।",
             "banglish": "Apnar cash box e pressure beshi. Approved field support diye cash support coordinate korun."
         },
         "default": {
@@ -72,7 +72,7 @@ LOCAL_FALLBACKS = {
     "anomaly": {
         "near_identical_amounts": {
             "en": "Alert: Detected cluster of near-identical cash-out amounts from a small group of accounts in short intervals.",
-            "bn": "📣 গত ১২ মিনিটে স্বাভাবিকের তুলনায় অনেক বেশি ক্যাশ-আউট হয়েছে। কয়েকটি লেনদেনের পরিমাণ একই এবং অল্প কয়েকটি অ্যাকাউন্ট থেকে বারবার অনুরোধ এসেছে। বড় অঙ্কের নগদ পুনরায় সরবরাহের আগে পর্যালোচনা করুন।",
+            "bn": "📣 গত ১২ মিনিটে স্বাভাবিকের তুলনায় অনেক বেশি ক্যাশ-আউট হয়েছে। কয়েকটি লেনদেনের পরিমাণ প্রায় একই এবং অল্প কয়েকটি অ্যাকাউন্ট থেকে বারবার অনুরোধ এসেছে। এটি ঈদ-পূর্ব স্বাভাবিক চাহিদাও হতে পারে, তবে বড় অঙ্কের নগদ পুনরায় সরবরাহের আগে লেনদেনগুলো পর্যালোচনা করা প্রয়োজন।",
             "banglish": "Bhai, last 12 minute e pray eki amount er cash-out bar bar hocche. Kichu account identical transaction korche. High volume cash supply er age transaction check korun."
         },
         "default": {
