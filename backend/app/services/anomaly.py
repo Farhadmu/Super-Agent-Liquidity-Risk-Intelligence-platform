@@ -71,7 +71,8 @@ def extract_features_for_tx(db: Session, tx: Transaction):
         db, tx.agent_id, amount, tx_time, tx.counterparty_ref
     )
 
-    off_hours = 1 if (tx_time.hour < 9 or tx_time.hour >= 22) else 0
+    local_tx_time = tx_time + timedelta(hours=6)  # Demo data is interpreted in Bangladesh local time.
+    off_hours = 1 if (local_tx_time.hour < 9 or local_tx_time.hour >= 22) else 0
 
     features = [
         amount,
@@ -164,17 +165,24 @@ def check_transaction_for_anomaly(db: Session, tx: Transaction) -> AnomalyFlag:
         # decision_function usually returns positive for normal, negative for anomalies
         normalized_score = float(1.0 / (1.0 + np.exp(raw_score * 5))) # Logistic scaling
 
-        if pred == -1 or normalized_score > 0.65:
+        has_review_pattern = (
+            evidence["counterparty_repetition_30m"] >= 4
+            or evidence["similar_amounts_30m"] >= 4
+            or evidence["velocity_10m"] >= 5
+            or (evidence["off_hours_activity"] and evidence["amount"] > 15000)
+        )
+
+        if (pred == -1 or normalized_score > 0.65) and has_review_pattern:
             # Determine pattern type based on evidence values
             pattern_type = "unusual_transaction_amount"
             confidence = round(normalized_score * 0.95, 2)
             
-            if evidence["velocity_10m"] >= 5 or evidence["velocity_30m"] >= 10:
-                pattern_type = "velocity_spike"
+            if evidence["counterparty_repetition_30m"] >= 4:
+                pattern_type = "repeated_counterparty"
             elif evidence["similar_amounts_30m"] >= 4:
                 pattern_type = "near_identical_amounts"
-            elif evidence["counterparty_repetition_30m"] >= 4:
-                pattern_type = "repeated_counterparty"
+            elif evidence["velocity_10m"] >= 5 or evidence["velocity_30m"] >= 10:
+                pattern_type = "velocity_spike"
             elif evidence["off_hours_activity"]:
                 pattern_type = "off_hours_activity"
 

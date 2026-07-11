@@ -1,7 +1,7 @@
 import time
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, desc
 from typing import Dict, Any
 from backend.app.models.database import get_db
 from backend.app.models.schemas import Transaction, AnomalyFlag, LiquidityForecast
@@ -49,10 +49,12 @@ def get_validation_metrics(db: Session = Depends(get_db)):
     fpr = fp / baseline_count if baseline_count > 0 else 0.0
 
     # 3. Shortage Detection Lead Time (Scenario A)
-    # The shortage was detected when the remaining ETA was under 120 minutes (2 hours).
-    # Since the burn rate was constant, the alert was triggered 2 hours before depletion.
-    # We report lead time: "Alert triggered 120 minutes prior to depletion (under 2 hour threshold)."
-    lead_time_info = "Warning triggered at 112 minutes prior to actual wallet depletion (120-minute High-Risk threshold)."
+    latest_high_risk_forecast = db.query(LiquidityForecast).filter(
+        LiquidityForecast.risk_level == "high",
+        LiquidityForecast.eta_minutes.isnot(None)
+    ).order_by(desc(LiquidityForecast.computed_at)).first()
+    lead_time_minutes = latest_high_risk_forecast.eta_minutes if latest_high_risk_forecast else 0
+    lead_time_info = f"Current high-risk shortage warning gives operators about {lead_time_minutes} minutes to act before projected depletion."
 
     # 4. Alert Explanation Coverage
     # Check what percentage of flags contain both 'evidence' and 'confidence'
@@ -83,7 +85,7 @@ def get_validation_metrics(db: Session = Depends(get_db)):
             "false_positive_rate": round(fpr, 4)
         },
         "liquidity_forecasting": {
-            "lead_time_minutes": 112,
+            "lead_time_minutes": lead_time_minutes,
             "accuracy_ratio": 0.98,
             "context": lead_time_info
         },

@@ -92,9 +92,11 @@ def compute_liquidity_forecast(db: Session, agent_id: int, provider_id: int = No
     # Burn rate is positive when the balance is decreasing (negative flow)
     negative_flows = [-flow for flow in buckets if flow < 0]
     
-    # We compute net flow across the whole period to get rolling average burn rate
+    # Use the active transaction window so a recent surge is not diluted across
+    # quiet lookback hours. This keeps ETAs aligned with the live service pressure.
     total_net_flow = sum(buckets)
-    time_span_minutes = hours_lookback * 60
+    active_span_minutes = (txs[-1].created_at - txs[0].created_at).total_seconds() / 60.0
+    time_span_minutes = max(bucket_size_min, min(hours_lookback * 60, active_span_minutes))
     
     # Average change per minute
     avg_change_per_minute = total_net_flow / time_span_minutes

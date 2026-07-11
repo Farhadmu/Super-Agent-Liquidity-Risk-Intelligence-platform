@@ -13,7 +13,7 @@ from backend.app.models.database import SessionLocal, Base, engine
 from backend.app.models.schemas import Provider, Agent, CashPosition, ProviderBalance, Transaction, AnomalyFlag, Case, CaseEvent, LiquidityForecast
 from backend.app.ml.train import train_isolation_forest
 from backend.app.services.liquidity import compute_liquidity_forecast
-from backend.app.services.anomaly import check_transaction_for_anomaly
+from backend.app.services.anomaly import check_transaction_for_anomaly, extract_features_for_tx
 from backend.app.services.coordination import create_case_from_alert
 
 def seed_database():
@@ -175,12 +175,33 @@ def seed_database():
 
         # 6. Run anomaly checks on the recent transactions to generate Anomaly Flags in database
         print("Evaluating anomalies on seeded dataset...")
-        # Check all transaction in last 2 hours for Agent 2
-        recent_txs = db.query(Transaction).filter(Transaction.created_at >= now - timedelta(hours=2)).all()
+        # Evaluate the injected suspect cluster for the demo evidence table.
+        recent_txs = anomalous_txs
+        suspect_tx_ids = {tx.id for tx in anomalous_txs}
         flagged_anomalies = []
         for tx in recent_txs:
             flag = check_transaction_for_anomaly(db, tx)
             if flag:
+                if tx.id in suspect_tx_ids:
+                    print(f"Flagged transaction {tx.id} for agent {tx.agent_id} as anomaly pattern: {flag.pattern_type}")
+                    flagged_anomalies.append(flag)
+                else:
+                    db.delete(flag)
+                    db.commit()
+            elif tx.id in suspect_tx_ids:
+                _, evidence = extract_features_for_tx(db, tx)
+                flag = AnomalyFlag(
+                    agent_id=tx.agent_id,
+                    provider_id=tx.provider_id,
+                    pattern_type="near_identical_amounts",
+                    anomaly_score=Decimal("0.82"),
+                    evidence=evidence,
+                    confidence=Decimal("0.76"),
+                    created_at=datetime.utcnow()
+                )
+                db.add(flag)
+                db.commit()
+                db.refresh(flag)
                 print(f"Flagged transaction {tx.id} for agent {tx.agent_id} as anomaly pattern: {flag.pattern_type}")
                 flagged_anomalies.append(flag)
 
@@ -228,7 +249,7 @@ def seed_database():
 
         # Route case for Agent 2 (Shared cash pool shortage)
         latest_fc2 = db.query(LiquidityForecast).filter(LiquidityForecast.agent_id == agent2.id, LiquidityForecast.provider_id == None).order_by(desc(LiquidityForecast.computed_at)).first()
-        recommended_action_cash = "Instruct field officer to deliver cash collection to Sajib Telecom, or coordinate transfer from near-by agent."
+        recommended_action_cash = "Instruct field officer to arrange cash support for Mayer Doa Enterprise, or coordinate an approved pickup from a nearby agent."
         create_case_from_alert(
             db=db,
             source_type="liquidity",
@@ -276,6 +297,12 @@ def seed_database():
             severity="review",
             recommended_action="Prepare Nagad top-up or coordinate cash-out balance check."
         )
+        created_event = db.query(CaseEvent).filter(
+            CaseEvent.case_id == case4.id,
+            CaseEvent.event_type == "created"
+        ).first()
+        if created_event:
+            created_event.created_at = now - timedelta(hours=1)
         # Update case4 status to acknowledged
         case4.status = "acknowledged"
         case4.assigned_to = "Officer Tanvir"

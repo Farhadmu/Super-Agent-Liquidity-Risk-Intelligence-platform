@@ -18,7 +18,7 @@ graph TD
     end
 
     %% Gateway Layer
-    subgraph API [FastAPI Gateway - Port 8000]
+    subgraph API [FastAPI Gateway - Port 8080]
         AR[Agents Router: /overview, /forecasts, /anomalies]
         CR[Cases Router: /acknowledge, /escalate, /resolve, /notes]
         MR[Metrics Router: /validation]

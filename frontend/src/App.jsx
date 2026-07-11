@@ -36,6 +36,18 @@ function App() {
   const [seedMessage, setSeedMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Error State
+  const [error, setError] = useState(null);
+
+  // Escape key to close metrics modal
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && showMetrics) setShowMetrics(false);
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [showMetrics]);
+
   // Fetch Agent Data
   useEffect(() => {
     if (activeTab === 'agent' && selectedAgentId) {
@@ -74,8 +86,11 @@ function App() {
       const anomalyRes = await fetch(`${API_BASE}/agents/${id}/anomalies`);
       const anomalies = await anomalyRes.json();
       setAgentAnomalies(anomalies);
+
+      setError(null);
     } catch (err) {
       console.error("Error fetching agent data:", err);
+      setError('Failed to connect to the server. Please check that the backend is running.');
     } finally {
       setLoading(false);
     }
@@ -94,8 +109,11 @@ function App() {
       if (data.length > 0 && !selectedCaseId) {
         setSelectedCaseId(data[0].id);
       }
+
+      setError(null);
     } catch (err) {
       console.error("Error fetching cases:", err);
+      setError('Failed to connect to the server. Please check that the backend is running.');
     } finally {
       setLoading(false);
     }
@@ -176,6 +194,13 @@ function App() {
     }
   };
 
+  const handleKeyActivate = (e, callback) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      callback();
+    }
+  };
+
   return (
     <>
       <header>
@@ -183,7 +208,7 @@ function App() {
           <div className="logo-icon">Ω</div>
           <div>
             <h1 className="logo-text">SUPER-AGENT</h1>
-            <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 'bold', tracking: '0.05em' }}>
+            <span className="logo-subtitle">
               MULTI-PROVIDER COORDINATION PORTAL
             </span>
           </div>
@@ -202,7 +227,7 @@ function App() {
             Ops Control Room
           </button>
         </div>
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
+        <div className="header-actions">
           <button className="btn btn-secondary" onClick={fetchValidationMetrics}>
             Validation Metrics
           </button>
@@ -214,27 +239,40 @@ function App() {
 
       <main className="main-content">
         {seedMessage && (
-          <div className="glass-card" style={{ marginBottom: '1.5rem', background: 'rgba(59, 130, 246, 0.1)', borderColor: 'var(--color-accent)' }}>
-            <p style={{ fontWeight: 'bold', color: '#fff' }}>⚡ {seedMessage}</p>
+          <div className="glass-card seed-message-card">
+            <p className="seed-message-text">⚡ {seedMessage}</p>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="glass-card error-container">
+            <div className="error-icon">⚠️</div>
+            <p className="error-message">{error}</p>
+            <button className="btn btn-primary" onClick={() => { setError(null); activeTab === 'agent' ? fetchAgentData(selectedAgentId) : fetchCases(); }}>
+              Retry Connection
+            </button>
           </div>
         )}
 
         {/* Validation Metrics Modal / Drawer Overlay */}
         {showMetrics && metrics && (
-          <div style={{
-            position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-            backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex',
-            alignItems: 'center', justifyContent: 'center'
-          }}>
-            <div className="glass-card" style={{ width: '90%', maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto', background: 'var(--bg-main)', border: '1px solid rgba(255,255,255,0.15)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <div
+            className="modal-overlay"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Validation Metrics"
+            onClick={() => setShowMetrics(false)}
+          >
+            <div className="glass-card modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
                 <h2 className="details-title">System & Analytical Metrics</h2>
                 <button className="btn btn-secondary" onClick={() => setShowMetrics(false)}>Close</button>
               </div>
               
               <div className="metrics-report">
                 <div>
-                  <h3 style={{ color: '#fff', fontSize: '1rem', marginBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                  <h3 className="metrics-section-title">
                     Anomaly Detection (IsolationForest)
                   </h3>
                   <div className="metric-row">
@@ -256,7 +294,7 @@ function App() {
                 </div>
 
                 <div>
-                  <h3 style={{ color: '#fff', fontSize: '1rem', marginBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                  <h3 className="metrics-section-title">
                     Liquidity Forecasting
                   </h3>
                   <div className="metric-row">
@@ -267,13 +305,13 @@ function App() {
                     <span className="metric-label">Forecast Timeline Accuracy</span>
                     <span className="metric-value">{(metrics.liquidity_forecasting.accuracy_ratio * 100).toFixed(0)}%</span>
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', padding: '0.5rem', background: 'rgba(59, 130, 246, 0.05)', borderRadius: '0.35rem', marginTop: '0.5rem' }}>
+                  <div className="metrics-info-box">
                     💡 {metrics.liquidity_forecasting.context}
                   </div>
                 </div>
 
                 <div>
-                  <h3 style={{ color: '#fff', fontSize: '1rem', marginBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                  <h3 className="metrics-section-title">
                     API Performance & Scalability
                   </h3>
                   <div className="metric-row">
@@ -291,7 +329,7 @@ function App() {
                 </div>
 
                 <div>
-                  <h3 style={{ color: '#fff', fontSize: '1rem', marginBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                  <h3 className="metrics-section-title">
                     Explainability & Transparency
                   </h3>
                   <div className="metric-row">
@@ -310,7 +348,7 @@ function App() {
 
         {/* Tab 1: Agent Dashboard */}
         {activeTab === 'agent' && (
-          <div className="agent-grid">
+          <div className="agent-grid fade-in">
             {/* Sidebar with Selector */}
             <div className="sidebar">
               <div className="glass-card">
@@ -321,33 +359,36 @@ function App() {
                       key={a.id} 
                       className={`agent-selector-item ${selectedAgentId === a.id ? 'active' : ''}`}
                       onClick={() => setSelectedAgentId(a.id)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => handleKeyActivate(e, () => setSelectedAgentId(a.id))}
                     >
                       <div>
                         <div className="agent-selector-code">{a.code}</div>
                         <div className="agent-selector-area">{a.name}</div>
                       </div>
-                      <div style={{ fontSize: '0.8rem', color: selectedAgentId === a.id ? 'var(--color-accent)' : 'var(--text-muted)' }}>▶</div>
+                      <div className="agent-selector-arrow">▶</div>
                     </div>
                   ))}
                 </div>
               </div>
 
               {agentOverview && (
-                <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  <h4 style={{ fontSize: '0.85rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 'bold' }}>
+                <div className="glass-card agent-info-card">
+                  <h4 className="agent-info-title">
                     Agent Info & Location
                   </h4>
                   <div>
-                    <div style={{ fontWeight: 'bold', fontSize: '1.05rem', color: '#fff' }}>
+                    <div className="agent-info-name">
                       {agentOverview.agent_code === 'A001' ? 'Sajib Telecom' : 
                        agentOverview.agent_code === 'A002' ? 'Mayer Doa Enterprise' :
                        agentOverview.agent_code === 'A003' ? 'Riyad Variety Store' : 'Bismillah Store'}
                     </div>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                    <div className="agent-info-location">
                       {agentOverview.area}, {agentOverview.thana}, {agentOverview.district}
                     </div>
                   </div>
-                  <div style={{ borderTop: '1px solid var(--bg-card-border)', paddingTop: '0.75rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                  <div className="agent-info-warning">
                     🚨 Provider boundaries strictly maintained. Balances never auto-settled or converted.
                   </div>
                 </div>
@@ -356,9 +397,17 @@ function App() {
 
             {/* Dashboard Content */}
             <div className="dashboard-main">
+              {/* Loading State */}
+              {loading && !agentOverview && (
+                <div className="loading-container">
+                  <div className="loading-spinner" />
+                  <span className="loading-text">Loading data...</span>
+                </div>
+              )}
+
               {agentOverview && (
                 <div>
-                  <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '1rem', color: '#fff' }}>
+                  <h2 className="section-heading">
                     Liquidity Overview
                   </h2>
                   <div className="balance-grid">
@@ -371,7 +420,7 @@ function App() {
                       </span>
                       <div className="balance-update">
                         <span>Physical Cash Box</span>
-                        <span style={{ color: 'var(--color-success)', fontWeight: 'bold' }}>● Active</span>
+                        <span className="status-active">● Active</span>
                       </div>
                     </div>
 
@@ -395,7 +444,7 @@ function App() {
                         <div className="balance-update">
                           <span>Wallet Balance</span>
                           {pb.is_delayed ? (
-                            <span style={{ color: 'var(--color-warning)', fontWeight: 'bold' }}>⏳ FEED DELAY</span>
+                            <span className="status-delayed">⏳ FEED DELAY</span>
                           ) : (
                             <span>Updated just now</span>
                           )}
@@ -414,7 +463,20 @@ function App() {
                     <span style={{ color: 'var(--color-warning)' }}>⏳</span> Liquidity Shortage Risk
                   </h3>
                   
-                  {agentForecasts && agentForecasts.forecasts.map((f, i) => {
+                  {/* Loading state for forecasts */}
+                  {loading && !agentForecasts && (
+                    <div className="loading-container">
+                      <div className="loading-spinner" />
+                      <span className="loading-text">Loading data...</span>
+                    </div>
+                  )}
+
+                  {/* Empty state for forecasts */}
+                  {agentForecasts && (!agentForecasts.forecasts || agentForecasts.forecasts.length === 0) && (
+                    <p className="empty-state-text">No active liquidity forecasts available.</p>
+                  )}
+
+                  {agentForecasts && agentForecasts.forecasts && agentForecasts.forecasts.map((f, i) => {
                     const hasRisk = f.risk_level !== 'low' || f.confidence < 0.3;
                     return (
                       <div key={i} className={`alert-card ${f.risk_level}`}>
@@ -432,7 +494,7 @@ function App() {
                             Shortage ETA: ~{f.eta_minutes} Mins
                           </div>
                         ) : (
-                          <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                          <div className="no-shortage-text">
                             No impending shortage detected
                           </div>
                         )}
@@ -443,17 +505,17 @@ function App() {
                             <span className="alert-msg-en">{f.reason}</span>
                             {f.provider_name === 'bKash' && f.risk_level === 'high' && (
                               <span className="alert-msg-bn">
-                                📣 বর্তমান লেনদেনের ধারা অনুযায়ী কয়েক মিনিটের মধ্যে আপনার বিকাশ ই-মানি শেষ হয়ে যেতে পারে। নিরাপদে সেবা চালু রাখতে অতিরিক্ত ই-মানি টপ-আপ করার পরামর্শ দেওয়া হচ্ছে।
+                                📣 বর্তমান লেনদেনের ধারা অনুযায়ী কয়েক মিনিটের মধ্যে আপনার বিকাশ ই-মানি শেষ হয়ে যেতে পারে। নিরাপদে সেবা চালু রাখতে অতিরিক্ত ই-মানি টপ-আপ করার পরামর্শ দেওয়া হচ্ছে।
                               </span>
                             )}
                             {f.provider_name === 'Shared Cash' && f.risk_level === 'high' && (
                               <span className="alert-msg-bn">
-                                📣 বর্তমান লেনদেনের ধারা অনুযায়ী আপনার ড্রয়ারের নগদ টাকা শেষ হয়ে যেতে পারে। সবচেয়ে বেশি চাপ আসছে বিকাশ ক্যাশ-আউট থেকে। ২০,০০০+ টাকা অতিরিক্ত নগদ রিফিল করুন।
+                                📣 বর্তমান লেনদেনের ধারা অনুযায়ী আপনার ড্রয়ারের নগদ টাকা শেষ হয়ে যেতে পারে। সবচেয়ে বেশি চাপ আসছে বিকাশ ক্যাশ-আউট থেকে। ২০,০০০+ টাকা অতিরিক্ত নগদ রিফিল করুন।
                               </span>
                             )}
                             {f.confidence < 0.3 && (
                               <span className="alert-msg-bn">
-                                ⚠️ রকেট তথ্য সরবরাহে সাময়িক বিলম্ব হচ্ছে। সঠিক পূর্বাভাসের জন্য অপেক্ষা করা হচ্ছে, অনুগ্রহ করে সর্বশেষ ব্যাংক স্টেটমেন্ট দেখে সিদ্ধান্ত নিন।
+                                ⚠️ রকেট তথ্য সরবরাহে সাময়িক বিলম্ব হচ্ছে। সঠিক পূর্বাভাসের জন্য অপেক্ষা করা হচ্ছে, অনুগ্রহ করে সর্বশেষ ব্যাংক স্টেটমেন্ট দেখে সিদ্ধান্ত নিন।
                               </span>
                             )}
                           </div>
@@ -462,7 +524,7 @@ function App() {
                         <div className="alert-meta">
                           <div>
                             <div>Confidence Score</div>
-                            <div style={{ fontWeight: 'bold', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <div className="confidence-display">
                               {(f.confidence * 100).toFixed(0)}%
                               <div className="confidence-bar-container">
                                 <div 
@@ -475,9 +537,9 @@ function App() {
                               </div>
                             </div>
                           </div>
-                          <div style={{ textAlign: 'right' }}>
+                          <div className="alert-meta-balance">
                             <div>Current Balance</div>
-                            <div style={{ fontWeight: 'bold', color: '#fff' }}>{f.current_balance.toLocaleString()} BDT</div>
+                            <div className="alert-meta-balance-value">{f.current_balance.toLocaleString()} BDT</div>
                           </div>
                         </div>
                       </div>
@@ -492,7 +554,7 @@ function App() {
                   </h3>
                   
                   {agentAnomalies.length === 0 ? (
-                    <p style={{ color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '0.9rem' }}>
+                    <p className="empty-state-text">
                       No unusual behavioral activity detected in the last 2 hours.
                     </p>
                   ) : (
@@ -508,10 +570,10 @@ function App() {
                         </div>
 
                         <div>
-                          <div style={{ fontWeight: 'bold', color: '#fff', textTransform: 'capitalize' }}>
+                          <div className="anomaly-pattern-label">
                             Pattern: {a.pattern_type.replace(/_/g, ' ')}
                           </div>
-                          <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                          <p className="anomaly-score-text">
                             Decision Score: {(a.anomaly_score * 100).toFixed(1)}% (Confidence: {(a.confidence * 100).toFixed(0)}%)
                           </p>
                         </div>
@@ -523,19 +585,19 @@ function App() {
                               Alert: Detected cluster of near-identical cash-out amounts from a small group of accounts.
                             </span>
                             <span className="alert-msg-bn">
-                              📣 গত ১২ মিনিটে স্বাভাবিকের তুলনায় অনেক বেশি ক্যাশ-আউট হয়েছে। কয়েকটি লেনদেনের পরিমাণ একই এবং অল্প কয়েকটি অ্যাকাউন্ট থেকে বারবার অনুরোধ এসেছে। বড় অঙ্কের নগদ পুনরায় সরবরাহের আগে পর্যালোচনা করুন।
+                              📣 গত ১২ মিনিটে স্বাভাবিকের তুলনায় অনেক বেশি ক্যাশ-আউট হয়েছে। কয়েকটি লেনদেনের পরিমাণ একই এবং অল্প কয়েকটি অ্যাকাউন্ট থেকে বারবার অনুরোধ এসেছে। বড় অঙ্কের নগদ পুনরায় সরবরাহের আগে পর্যালোচনা করুন।
                             </span>
                           </div>
                         )}
 
-                        <div className="details-section-title" style={{ margin: '0.25rem 0' }}>Evidence Parameters</div>
+                        <div className="details-section-title compact">Evidence Parameters</div>
                         <div className="evidence-grid">
-                          <div>Tx ID: <span style={{ color: '#fff' }}>#{a.evidence.transaction_id}</span></div>
-                          <div>Amount: <span style={{ color: '#fff' }}>{a.evidence.amount} BDT</span></div>
-                          <div>Mean: <span style={{ color: '#fff' }}>{a.evidence.historical_mean} BDT</span></div>
-                          <div>Dev: <span style={{ color: 'var(--color-danger)' }}>+{a.evidence.amount_deviation} BDT</span></div>
-                          <div>Velocity (10m): <span style={{ color: '#fff' }}>{a.evidence.velocity_10m} tx</span></div>
-                          <div>Repetition (30m): <span style={{ color: '#fff' }}>{a.evidence.counterparty_repetition_30m} tx</span></div>
+                          <div>Tx ID: <span className="ev-value">#{a.evidence.transaction_id}</span></div>
+                          <div>Amount: <span className="ev-value">{a.evidence.amount} BDT</span></div>
+                          <div>Mean: <span className="ev-value">{a.evidence.historical_mean} BDT</span></div>
+                          <div>Dev: <span className="ev-danger">+{a.evidence.amount_deviation} BDT</span></div>
+                          <div>Velocity (10m): <span className="ev-value">{a.evidence.velocity_10m} tx</span></div>
+                          <div>Repetition (30m): <span className="ev-value">{a.evidence.counterparty_repetition_30m} tx</span></div>
                         </div>
                       </div>
                     ))
@@ -548,14 +610,14 @@ function App() {
 
         {/* Tab 2: Ops Control Room (Cases) */}
         {activeTab === 'ops' && (
-          <div className="ops-grid">
+          <div className="ops-grid fade-in">
             {/* Left side: Case Queue list */}
             <div>
-              <div className="glass-card" style={{ marginBottom: '1.5rem' }}>
+              <div className="glass-card ops-header-card">
                 <h3 className="alert-panel-title">Operations Case Queue</h3>
                 <div className="filter-bar">
                   <div>
-                    <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>Status</label>
+                    <label className="filter-label">Status</label>
                     <select className="filter-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
                       <option value="">All Statuses</option>
                       <option value="open">Open</option>
@@ -565,7 +627,7 @@ function App() {
                     </select>
                   </div>
                   <div>
-                    <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>Assigned Role</label>
+                    <label className="filter-label">Assigned Role</label>
                     <select className="filter-select" value={filterRole} onChange={e => setFilterRole(e.target.value)}>
                       <option value="">All Roles</option>
                       <option value="provider_ops">Provider Operations</option>
@@ -574,11 +636,10 @@ function App() {
                     </select>
                   </div>
 
-                  <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.5rem', background: 'rgba(31,41,55,0.4)', padding: '0.25rem 0.5rem', borderRadius: '0.5rem' }}>
-                    <div style={{ fontSize: '0.8rem' }}>Acting As: </div>
+                  <div className="acting-as-container">
+                    <div className="acting-as-label">Acting As: </div>
                     <select 
-                      className="filter-select" 
-                      style={{ padding: '0.15rem 0.5rem', background: 'transparent', border: 'none' }}
+                      className="filter-select acting-as-select"
                       value={actorRole} 
                       onChange={e => {
                         setActorRole(e.target.value);
@@ -595,9 +656,17 @@ function App() {
                 </div>
               </div>
 
-              {cases.length === 0 ? (
-                <div className="glass-card" style={{ textAlign: 'center', padding: '3rem' }}>
-                  <p style={{ color: 'var(--text-secondary)' }}>No active cases match the current filters.</p>
+              {/* Loading state for cases */}
+              {loading && cases.length === 0 && (
+                <div className="loading-container">
+                  <div className="loading-spinner" />
+                  <span className="loading-text">Loading data...</span>
+                </div>
+              )}
+
+              {cases.length === 0 && !loading ? (
+                <div className="glass-card empty-state-card">
+                  <p className="empty-state-text">No active cases match the current filters.</p>
                 </div>
               ) : (
                 <div className="case-queue-list">
@@ -606,6 +675,9 @@ function App() {
                       key={c.id} 
                       className={`case-card ${selectedCaseId === c.id ? 'active' : ''}`}
                       onClick={() => setSelectedCaseId(c.id)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => handleKeyActivate(e, () => setSelectedCaseId(c.id))}
                     >
                       <div className="case-card-info">
                         <div className="case-card-meta">
@@ -620,14 +692,14 @@ function App() {
                         <div className="case-card-title">
                           {c.source_type === 'liquidity' ? 'Wallet Shortage Threat' : 'Behavioral Pattern Anomaly'}
                         </div>
-                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                          Routed To: <span style={{ color: 'var(--color-accent)', fontWeight: 600 }}>{c.assigned_role}</span>
+                        <div className="case-routed-text">
+                          Routed To: <span className="case-routed-role">{c.assigned_role}</span>
                         </div>
                       </div>
                       
-                      <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                      <div className="case-card-actions">
                         <span className={`case-card-status ${c.status}`}>{c.status}</span>
-                        <div style={{ fontSize: '1rem', color: selectedCaseId === c.id ? 'var(--color-accent)' : 'var(--text-muted)' }}>▶</div>
+                        <div className="case-card-arrow">▶</div>
                       </div>
                     </div>
                   ))}
@@ -638,7 +710,7 @@ function App() {
             {/* Right side: Selected Case Detail pane */}
             <div>
               {selectedCase ? (
-                <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                <div className="glass-card details-card">
                   <div className="details-header">
                     <div>
                       <h2 className="details-title">
@@ -653,7 +725,7 @@ function App() {
 
                   <div>
                     <div className="details-section-title">Case Owner</div>
-                    <div style={{ fontWeight: 'bold', color: '#fff', fontSize: '0.95rem' }}>
+                    <div className="case-owner-text">
                       {selectedCase.assigned_to ? `👤 ${selectedCase.assigned_to} (${selectedCase.assigned_role})` : '👥 Unassigned (Open Queue)'}
                     </div>
                   </div>
@@ -699,9 +771,8 @@ function App() {
                       )}
                       
                       <button 
-                        className="btn btn-secondary"
+                        className="btn btn-secondary btn-span-full"
                         onClick={() => { setNoteType('note'); setCustomNote(''); }}
-                        style={{ gridColumn: 'span 2' }}
                       >
                         Add Timeline Note
                       </button>
@@ -711,17 +782,18 @@ function App() {
                   {/* Action Transition Note Form */}
                   {noteType && (
                     <div className="note-input-container">
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--color-warning)', textTransform: 'uppercase' }}>
+                      <div className="note-header">
+                        <span className="note-action-label">
                           Confirm {noteType} action
                         </span>
-                        <button style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer' }} onClick={() => setNoteType('')}>✕</button>
+                        <button className="note-close-btn" onClick={() => setNoteType('')}>✕</button>
                       </div>
                       <textarea
                         className="input-textarea"
                         placeholder={`Write the details of the ${noteType}...`}
                         value={customNote}
                         onChange={e => setCustomNote(e.target.value)}
+                        aria-label="Note details"
                       />
                       <button className="btn btn-primary" onClick={() => handleTransitionSubmit(selectedCase.id)}>
                         Submit {noteType}
@@ -748,8 +820,8 @@ function App() {
 
                 </div>
               ) : (
-                <div className="glass-card" style={{ textAlign: 'center', padding: '3rem' }}>
-                  <p style={{ color: 'var(--text-secondary)' }}>Select a case from the queue to view details and coordinate.</p>
+                <div className="glass-card empty-state-card">
+                  <p className="empty-state-text">Select a case from the queue to view details and coordinate.</p>
                 </div>
               )}
             </div>
