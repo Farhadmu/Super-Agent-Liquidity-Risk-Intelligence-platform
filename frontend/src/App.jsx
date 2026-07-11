@@ -61,6 +61,17 @@ const DEMO_USERS = [
     agentId: 1,
     username: 'sajib.agent',
     password: 'demo123'
+  },
+  {
+    id: 'demo_architect',
+    name: 'Demo Architect (Admin)',
+    role: 'admin',
+    roleLabel: 'Demo Architect',
+    scope: 'Create custom sandbox scenarios',
+    defaultTab: 'agent',
+    agentId: 1,
+    username: 'admin.demo',
+    password: 'demo123'
   }
 ];
 
@@ -219,6 +230,22 @@ function App() {
   const [trendProviders, setTrendProviders] = useState(['cash', 'bkash', 'nagad', 'rocket']);
   const [hoveredPoint, setHoveredPoint] = useState(null);
 
+  // Sandbox Scenario controls
+  const [sandboxCash, setSandboxCash] = useState(120000);
+  const [sandboxBkash, setSandboxBkash] = useState(75000);
+  const [sandboxNagad, setSandboxNagad] = useState(65000);
+  const [sandboxRocket, setSandboxRocket] = useState(55000);
+  const [sandboxBkashDelayed, setSandboxBkashDelayed] = useState(false);
+  const [sandboxNagadDelayed, setSandboxNagadDelayed] = useState(false);
+  const [sandboxRocketDelayed, setSandboxRocketDelayed] = useState(false);
+  const [sandboxInjectAnomaly, setSandboxInjectAnomaly] = useState(false);
+  const [sandboxAnomalyAmount, setSandboxAnomalyAmount] = useState(9999);
+  const [sandboxAnomalyCount, setSandboxAnomalyCount] = useState(5);
+  const [sandboxAnomalyCounterparty, setSandboxAnomalyCounterparty] = useState('CUST_CUSTOM');
+  const [sandboxAnomalyType, setSandboxAnomalyType] = useState('cash_out');
+  const [sandboxMessage, setSandboxMessage] = useState('');
+  const [sandboxLoading, setSandboxLoading] = useState(false);
+
   const actorName = currentUser?.name || 'Demo User';
   const actorRole = currentUser?.role || 'viewer';
   const selectedLoginUser = DEMO_USERS.find(user => user.id === loginRoleId) || DEMO_USERS[0];
@@ -368,6 +395,74 @@ function App() {
     setShowActionsDropdown(false);
     setNoteType('');
     setCustomNote('');
+  };
+
+  // Sync sandbox state when agent overview data is fetched
+  useEffect(() => {
+    if (agentOverview) {
+      setSandboxCash(agentOverview.shared_cash);
+      let bkashVal = 0, nagadVal = 0, rocketVal = 0;
+      let bkashDel = false, nagadDel = false, rocketDel = false;
+      if (agentOverview.provider_balances) {
+        agentOverview.provider_balances.forEach(pb => {
+          const name = pb.provider_name.toLowerCase();
+          if (name.includes('bkash')) {
+            bkashVal = pb.balance;
+            bkashDel = pb.is_delayed;
+          } else if (name.includes('nagad')) {
+            nagadVal = pb.balance;
+            nagadDel = pb.is_delayed;
+          } else if (name.includes('rocket')) {
+            rocketVal = pb.balance;
+            rocketDel = pb.is_delayed;
+          }
+        });
+      }
+      setSandboxBkash(bkashVal);
+      setSandboxNagad(nagadVal);
+      setSandboxRocket(rocketVal);
+      setSandboxBkashDelayed(bkashDel);
+      setSandboxNagadDelayed(nagadDel);
+      setSandboxRocketDelayed(rocketDel);
+    }
+  }, [agentOverview]);
+
+  const handleApplyCustomScenario = async () => {
+    setSandboxLoading(true);
+    setSandboxMessage('');
+    try {
+      const res = await fetch(`${API_BASE}/simulate/custom-scenario`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agent_id: selectedAgentId,
+          shared_cash: Number(sandboxCash),
+          bkash_balance: Number(sandboxBkash),
+          nagad_balance: Number(sandboxNagad),
+          rocket_balance: Number(sandboxRocket),
+          bkash_delayed: sandboxBkashDelayed,
+          nagad_delayed: sandboxNagadDelayed,
+          rocket_delayed: sandboxRocketDelayed,
+          inject_anomaly: sandboxInjectAnomaly,
+          anomaly_amount: Number(sandboxAnomalyAmount),
+          anomaly_count: Number(sandboxAnomalyCount),
+          anomaly_counterparty: sandboxAnomalyCounterparty,
+          anomaly_type: sandboxAnomalyType
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSandboxMessage(`✅ Success: ${data.message}`);
+        // Fetch new data
+        fetchAgentData(selectedAgentId);
+      } else {
+        setSandboxMessage(`❌ Error: ${data.detail || 'Could not apply scenario'}`);
+      }
+    } catch (err) {
+      setSandboxMessage(`❌ Error: ${err.message}`);
+    } finally {
+      setSandboxLoading(false);
+    }
   };
 
   // Escape key and scroll handler to dismiss overlays
@@ -950,6 +1045,157 @@ function App() {
 
               {agentOverview && (
                 <div>
+                  {currentUser?.role === 'admin' && (
+                    <div className="glass-card sandbox-panel" style={{ marginBottom: '1.5rem', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                      <div className="sandbox-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '0.75rem', marginBottom: '1rem' }}>
+                        <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#10B981', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+                          🛠️ Scenario Architect Sandbox
+                        </h3>
+                        <span className="badge-provider" style={{ backgroundColor: '#10B981', color: '#fff', fontSize: '0.7rem' }}>ADMIN ROLE</span>
+                      </div>
+                      
+                      <div className="sandbox-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '1rem' }}>
+                        <div className="sandbox-field" style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                          <label style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-secondary)' }}>Shared Cash (BDT)</label>
+                          <input 
+                            type="number" 
+                            className="mobile-select-element" 
+                            style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '0.4rem 0.6rem', borderRadius: '0.5rem', fontSize: '0.85rem' }}
+                            value={sandboxCash} 
+                            onChange={e => setSandboxCash(Number(e.target.value))} 
+                          />
+                        </div>
+
+                        <div className="sandbox-field" style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                          <label style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-secondary)' }}>bKash Balance (BDT)</label>
+                          <input 
+                            type="number" 
+                            className="mobile-select-element" 
+                            style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '0.4rem 0.6rem', borderRadius: '0.5rem', fontSize: '0.85rem' }}
+                            value={sandboxBkash} 
+                            onChange={e => setSandboxBkash(Number(e.target.value))} 
+                          />
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.7rem', color: 'var(--text-secondary)', cursor: 'pointer', marginTop: '0.2rem' }}>
+                            <input type="checkbox" checked={sandboxBkashDelayed} onChange={e => setSandboxBkashDelayed(e.target.checked)} />
+                            Feed Delay (3h)
+                          </label>
+                        </div>
+
+                        <div className="sandbox-field" style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                          <label style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-secondary)' }}>Nagad Balance (BDT)</label>
+                          <input 
+                            type="number" 
+                            className="mobile-select-element" 
+                            style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '0.4rem 0.6rem', borderRadius: '0.5rem', fontSize: '0.85rem' }}
+                            value={sandboxNagad} 
+                            onChange={e => setSandboxNagad(Number(e.target.value))} 
+                          />
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.7rem', color: 'var(--text-secondary)', cursor: 'pointer', marginTop: '0.2rem' }}>
+                            <input type="checkbox" checked={sandboxNagadDelayed} onChange={e => setSandboxNagadDelayed(e.target.checked)} />
+                            Feed Delay (3h)
+                          </label>
+                        </div>
+
+                        <div className="sandbox-field" style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                          <label style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-secondary)' }}>Rocket Balance (BDT)</label>
+                          <input 
+                            type="number" 
+                            className="mobile-select-element" 
+                            style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '0.4rem 0.6rem', borderRadius: '0.5rem', fontSize: '0.85rem' }}
+                            value={sandboxRocket} 
+                            onChange={e => setSandboxRocket(Number(e.target.value))} 
+                          />
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.7rem', color: 'var(--text-secondary)', cursor: 'pointer', marginTop: '0.2rem' }}>
+                            <input type="checkbox" checked={sandboxRocketDelayed} onChange={e => setSandboxRocketDelayed(e.target.checked)} />
+                            Feed Delay (3h)
+                          </label>
+                        </div>
+                      </div>
+
+                      <div style={{ marginTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.75rem' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', fontWeight: '700', color: '#fff', cursor: 'pointer' }}>
+                          <input type="checkbox" checked={sandboxInjectAnomaly} onChange={e => setSandboxInjectAnomaly(e.target.checked)} />
+                          ⚡ Inject transaction velocity burst (ML Anomaly Trigger)
+                        </label>
+                        
+                        {sandboxInjectAnomaly && (
+                          <div className="sandbox-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '1rem', marginTop: '0.75rem', padding: '0.75rem', background: 'rgba(0,0,0,0.15)', borderRadius: '0.5rem' }}>
+                            <div className="sandbox-field" style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                              <label style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-secondary)' }}>Tx Amount (BDT)</label>
+                              <input 
+                                type="number" 
+                                className="mobile-select-element" 
+                                style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '0.35rem 0.5rem', borderRadius: '0.4rem', fontSize: '0.8rem' }}
+                                value={sandboxAnomalyAmount} 
+                                onChange={e => setSandboxAnomalyAmount(Number(e.target.value))} 
+                              />
+                            </div>
+                            <div className="sandbox-field" style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                              <label style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-secondary)' }}>Tx Count (Burst Size)</label>
+                              <input 
+                                type="number" 
+                                className="mobile-select-element" 
+                                style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '0.35rem 0.5rem', borderRadius: '0.4rem', fontSize: '0.8rem' }}
+                                value={sandboxAnomalyCount} 
+                                onChange={e => setSandboxAnomalyCount(Number(e.target.value))} 
+                              />
+                            </div>
+                            <div className="sandbox-field" style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                              <label style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-secondary)' }}>Counterparty Ref</label>
+                              <input 
+                                type="text" 
+                                className="mobile-select-element" 
+                                style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '0.35rem 0.5rem', borderRadius: '0.4rem', fontSize: '0.8rem' }}
+                                value={sandboxAnomalyCounterparty} 
+                                onChange={e => setSandboxAnomalyCounterparty(e.target.value)} 
+                              />
+                            </div>
+                            <div className="sandbox-field" style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                              <label style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-secondary)' }}>Transaction Type</label>
+                              <select 
+                                className="mobile-select-element" 
+                                style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '0.35rem 0.5rem', borderRadius: '0.4rem', fontSize: '0.8rem' }}
+                                value={sandboxAnomalyType} 
+                                onChange={e => setSandboxAnomalyType(e.target.value)}
+                              >
+                                <option value="cash_out">Cash Out (Withdraw)</option>
+                                <option value="cash_in">Cash In (Deposit)</option>
+                              </select>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {sandboxMessage && (
+                        <div style={{ marginTop: '1rem', padding: '0.5rem 0.75rem', borderRadius: '0.5rem', background: 'rgba(0,0,0,0.2)', fontSize: '0.8rem', color: '#fff' }}>
+                          {sandboxMessage}
+                        </div>
+                      )}
+
+                      <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem', justifyContent: 'flex-end' }}>
+                        <button 
+                          className="btn btn-secondary" 
+                          style={{ minHeight: '2rem', padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                          onClick={() => {
+                            if (window.confirm("Are you sure you want to reset the database and seed baseline values?")) {
+                              triggerSeed();
+                            }
+                          }}
+                        >
+                          🔄 Reset Baseline DB
+                        </button>
+                        <button 
+                          className="btn btn-primary" 
+                          style={{ minHeight: '2rem', padding: '0.4rem 1.2rem', fontSize: '0.8rem', background: '#10B981', borderColor: '#10B981' }}
+                          onClick={handleApplyCustomScenario}
+                          disabled={sandboxLoading}
+                        >
+                          {sandboxLoading ? 'Applying...' : 'Apply Sandbox Scenario'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   <h2 className="section-heading">
                     Liquidity Overview <HelpDot text="Balances are separated into shared physical cash and provider-specific e-money wallets." />
                   </h2>
