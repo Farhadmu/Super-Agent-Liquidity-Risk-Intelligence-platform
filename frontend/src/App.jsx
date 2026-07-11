@@ -79,14 +79,21 @@ function App() {
   // Error State
   const [error, setError] = useState(null);
 
-  // Escape key to close metrics modal
+  const [showAgentInfoModal, setShowAgentInfoModal] = useState(false);
+  const [showActionsDropdown, setShowActionsDropdown] = useState(false);
+
+  // Escape key to close modals
   useEffect(() => {
     const handleEscape = (e) => {
-      if (e.key === 'Escape' && showMetrics) setShowMetrics(false);
+      if (e.key === 'Escape') {
+        setShowMetrics(false);
+        setShowAgentInfoModal(false);
+        setShowActionsDropdown(false);
+      }
     };
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [showMetrics]);
+  }, []);
 
   // Fetch Agent Data
   useEffect(() => {
@@ -267,13 +274,34 @@ function App() {
             Ops Control Room
           </button>
         </div>
-        <div className="header-actions">
+        <div className="header-actions-desktop">
           <button className="btn btn-secondary" onClick={fetchValidationMetrics}>
             Validation Metrics
           </button>
           <button className="btn btn-primary" onClick={triggerSeed} disabled={loading}>
             Reset / Seed Data
           </button>
+        </div>
+
+        <div className="header-actions-mobile">
+          <button 
+            className="btn btn-secondary" 
+            onClick={() => setShowActionsDropdown(!showActionsDropdown)}
+            aria-expanded={showActionsDropdown}
+            aria-label="Toggle Actions Menu"
+          >
+            ⚙️ Tools
+          </button>
+          {showActionsDropdown && (
+            <div className="glass-card header-dropdown-menu" onClick={e => e.stopPropagation()}>
+              <button className="btn btn-secondary" style={{ width: '100%' }} onClick={() => { setShowActionsDropdown(false); fetchValidationMetrics(); }}>
+                Validation Metrics
+              </button>
+              <button className="btn btn-primary" style={{ width: '100%', marginTop: '0.5rem' }} onClick={() => { setShowActionsDropdown(false); triggerSeed(); }} disabled={loading}>
+                Reset / Seed Data
+              </button>
+            </div>
+          )}
         </div>
       </header>
 
@@ -292,6 +320,45 @@ function App() {
             <button className="btn btn-primary" onClick={() => { setError(null); activeTab === 'agent' ? fetchAgentData(selectedAgentId) : fetchCases(); }}>
               Retry Connection
             </button>
+          </div>
+        )}
+
+        {/* Agent Info Modal (Mobile View details) */}
+        {showAgentInfoModal && agentOverview && (
+          <div 
+            className="modal-overlay" 
+            role="dialog" 
+            aria-modal="true" 
+            aria-label="Agent Location Info"
+            onClick={() => setShowAgentInfoModal(false)}
+          >
+            <div className="glass-card modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px', padding: '1.5rem' }}>
+              <div className="modal-header">
+                <h3 className="details-title">Agent Details</h3>
+                <button className="btn btn-secondary" onClick={() => setShowAgentInfoModal(false)}>Close</button>
+              </div>
+              <div className="agent-info-card" style={{ padding: '0.5rem 0' }}>
+                <div>
+                  <div className="agent-info-title">Agent Code & Name</div>
+                  <div className="agent-info-name" style={{ fontSize: '1.2rem', marginTop: '0.25rem' }}>
+                    {agentOverview.agent_code} - {
+                      agentOverview.agent_code === 'A001' ? 'Sajib Telecom' : 
+                      agentOverview.agent_code === 'A002' ? 'Mayer Doa Enterprise' :
+                      agentOverview.agent_code === 'A003' ? 'Riyad Variety Store' : 'Bismillah Store'
+                    }
+                  </div>
+                </div>
+                <div style={{ marginTop: '1rem' }}>
+                  <div className="agent-info-title">Location</div>
+                  <div className="agent-info-location" style={{ fontSize: '0.95rem', marginTop: '0.25rem' }}>
+                    📍 {agentOverview.area}, {agentOverview.thana}, {agentOverview.district}
+                  </div>
+                </div>
+                <div className="agent-info-warning" style={{ marginTop: '1.5rem', borderTop: '1px solid var(--bg-card-border)', paddingTop: '0.75rem' }}>
+                  🚨 Provider boundaries strictly maintained. Balances never auto-settled or converted.
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -391,48 +458,77 @@ function App() {
           <div className="agent-grid fade-in">
             {/* Sidebar with Selector */}
             <div className="sidebar">
-              <div className="glass-card">
-                <h3 className="agent-selector-title">Select Active Agent</h3>
-                <div className="agent-selector-list">
-                  {agentsList.map(a => (
-                    <div 
-                      key={a.id} 
-                      className={`agent-selector-item ${selectedAgentId === a.id ? 'active' : ''}`}
-                      onClick={() => setSelectedAgentId(a.id)}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => handleKeyActivate(e, () => setSelectedAgentId(a.id))}
+              {/* Mobile-only Agent Selector and Info Button */}
+              <div className="sidebar-mobile glass-card">
+                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', width: '100%' }}>
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <label className="agent-selector-title" style={{ margin: 0 }}>Active Agent</label>
+                    <select 
+                      className="filter-select"
+                      value={selectedAgentId} 
+                      onChange={e => setSelectedAgentId(Number(e.target.value))}
+                      style={{ width: '100%', padding: '0.4rem 0.5rem', borderRadius: '0.5rem', background: 'rgba(31, 41, 55, 0.8)' }}
                     >
-                      <div>
-                        <div className="agent-selector-code">{a.code}</div>
-                        <div className="agent-selector-area">{a.name}</div>
-                      </div>
-                      <div className="agent-selector-arrow">▶</div>
-                    </div>
-                  ))}
+                      {agentsList.map(a => (
+                        <option key={a.id} value={a.id}>{a.code} - {a.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <button 
+                    className="btn btn-secondary" 
+                    onClick={() => setShowAgentInfoModal(true)}
+                    style={{ alignSelf: 'flex-end', height: '34px', fontSize: '0.8rem', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                  >
+                    ℹ️ Info
+                  </button>
                 </div>
               </div>
 
-              {agentOverview && (
-                <div className="glass-card agent-info-card">
-                  <h4 className="agent-info-title">
-                    Agent Info & Location
-                  </h4>
-                  <div>
-                    <div className="agent-info-name">
-                      {agentOverview.agent_code === 'A001' ? 'Sajib Telecom' : 
-                       agentOverview.agent_code === 'A002' ? 'Mayer Doa Enterprise' :
-                       agentOverview.agent_code === 'A003' ? 'Riyad Variety Store' : 'Bismillah Store'}
-                    </div>
-                    <div className="agent-info-location">
-                      {agentOverview.area}, {agentOverview.thana}, {agentOverview.district}
-                    </div>
-                  </div>
-                  <div className="agent-info-warning">
-                    🚨 Provider boundaries strictly maintained. Balances never auto-settled or converted.
+              {/* Desktop-only Agent Selector */}
+              <div className="sidebar-desktop">
+                <div className="glass-card" style={{ marginBottom: '1rem' }}>
+                  <h3 className="agent-selector-title">Select Active Agent</h3>
+                  <div className="agent-selector-list">
+                    {agentsList.map(a => (
+                      <div 
+                        key={a.id} 
+                        className={`agent-selector-item ${selectedAgentId === a.id ? 'active' : ''}`}
+                        onClick={() => setSelectedAgentId(a.id)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => handleKeyActivate(e, () => setSelectedAgentId(a.id))}
+                      >
+                        <div>
+                          <div className="agent-selector-code">{a.code}</div>
+                          <div className="agent-selector-area">{a.name}</div>
+                        </div>
+                        <div className="agent-selector-arrow">▶</div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              )}
+
+                {agentOverview && (
+                  <div className="glass-card agent-info-card">
+                    <h4 className="agent-info-title">
+                      Agent Info & Location
+                    </h4>
+                    <div>
+                      <div className="agent-info-name">
+                        {agentOverview.agent_code === 'A001' ? 'Sajib Telecom' : 
+                         agentOverview.agent_code === 'A002' ? 'Mayer Doa Enterprise' :
+                         agentOverview.agent_code === 'A003' ? 'Riyad Variety Store' : 'Bismillah Store'}
+                      </div>
+                      <div className="agent-info-location">
+                        {agentOverview.area}, {agentOverview.thana}, {agentOverview.district}
+                      </div>
+                    </div>
+                    <div className="agent-info-warning">
+                      🚨 Provider boundaries strictly maintained. Balances never auto-settled or converted.
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Dashboard Content */}

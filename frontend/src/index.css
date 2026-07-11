@@ -123,10 +123,30 @@ header {
   letter-spacing: 0.05em;
 }
 
-.header-actions {
+.header-actions-desktop {
   display: flex;
   gap: 0.75rem;
   align-items: center;
+}
+
+.header-actions-mobile {
+  display: none;
+  position: relative;
+}
+
+.header-dropdown-menu {
+  position: absolute;
+  top: 45px;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  min-width: 180px;
+  background: var(--bg-main) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: var(--glass-shadow);
 }
 
 /* ============================================================
@@ -232,6 +252,14 @@ header {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+}
+
+.sidebar-desktop {
+  display: block;
+}
+
+.sidebar-mobile {
+  display: none;
 }
 
 .dashboard-main {
@@ -1322,6 +1350,18 @@ header {
   .forecast-section {
     grid-template-columns: 1fr;
     gap: 1.5rem;
+  }
+  .header-actions-desktop {
+    display: none !important;
+  }
+  .header-actions-mobile {
+    display: block;
+  }
+  .sidebar-desktop {
+    display: none !important;
+  }
+  .sidebar-mobile {
+    display: block;
   }
 }
 
