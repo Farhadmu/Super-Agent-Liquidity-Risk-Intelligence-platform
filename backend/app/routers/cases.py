@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 from backend.app.models.database import get_db
 from backend.app.models.schemas import Case, Agent, Provider, CaseEvent
-from backend.app.services.coordination import acknowledge_case, escalate_case, resolve_case, add_case_note
+from backend.app.services.coordination import acknowledge_case, escalate_case, resolve_case, add_case_note, reassign_case
 
 router = APIRouter(prefix="/cases", tags=["cases"])
 
@@ -95,6 +95,18 @@ def post_resolve_case(case_id: int, req: TransitionRequest, db: Session = Depend
 @router.post("/{case_id}/notes")
 def post_case_note(case_id: int, req: TransitionRequest, db: Session = Depends(get_db)):
     case = add_case_note(db, case_id, req.actor_role, req.note)
+    if not case:
+        raise HTTPException(status_code=404, detail="Case not found")
+    return {"status": "success"}
+
+class ReassignRequest(BaseModel):
+    actor_role: str
+    new_role: str
+    note: str
+
+@router.post("/{case_id}/reassign")
+def post_reassign_case(case_id: int, req: ReassignRequest, db: Session = Depends(get_db)):
+    case = reassign_case(db, case_id, req.actor_role, req.new_role, req.note)
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
     return {"status": "success"}

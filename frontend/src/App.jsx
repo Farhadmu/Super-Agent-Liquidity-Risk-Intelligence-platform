@@ -245,6 +245,7 @@ function App() {
   const [sandboxAnomalyType, setSandboxAnomalyType] = useState('cash_out');
   const [sandboxMessage, setSandboxMessage] = useState('');
   const [sandboxLoading, setSandboxLoading] = useState(false);
+  const [reassignTargetRole, setReassignTargetRole] = useState('provider_ops');
 
   const actorName = currentUser?.name || 'Demo User';
   const actorRole = currentUser?.role || 'viewer';
@@ -256,7 +257,7 @@ function App() {
   const canManageSelectedCase = Boolean(
     selectedCase
     && currentUser
-    && selectedCase.assigned_role === actorRole
+    && (selectedCase.assigned_role === actorRole || actorRole === 'admin' || actorRole === 'management')
     && selectedCase.status !== 'resolved'
   );
 
@@ -359,7 +360,7 @@ function App() {
     setCurrentUser(user);
     setActiveTab(user.defaultTab);
     setFilterStatus('');
-    setFilterRole(user.role === 'management' || user.role === 'agent' ? '' : user.role);
+    setFilterRole(user.role === 'management' || user.role === 'agent' || user.role === 'admin' ? '' : user.role);
     setNoteType('');
     setCustomNote('');
     if (user.agentId) {
@@ -501,7 +502,7 @@ function App() {
 
   useEffect(() => {
     if (!currentUser) return;
-    if (currentUser.role === 'management' || currentUser.role === 'agent') {
+    if (currentUser.role === 'management' || currentUser.role === 'agent' || currentUser.role === 'admin') {
       setFilterRole('');
     } else {
       setFilterRole(currentUser.role);
@@ -522,6 +523,12 @@ function App() {
     setNoteType('');
     setCustomNote('');
   }, [selectedCaseId, currentUser]);
+
+  useEffect(() => {
+    if (selectedCase) {
+      setReassignTargetRole(selectedCase.assigned_role);
+    }
+  }, [selectedCase]);
 
   const fetchValidationMetrics = async () => {
     try {
@@ -597,6 +604,38 @@ function App() {
       }
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleReassignCase = async (caseId, newRole, note) => {
+    try {
+      setLoading(true);
+      const res = await fetch(`${API_BASE}/cases/${caseId}/reassign`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          actor_role: actorRole,
+          new_role: newRole,
+          note: note || "No comments provided."
+        })
+      });
+      if (res.ok) {
+        // Refresh cases
+        await fetchCases();
+        
+        // Refresh selected case details
+        const overviewRes = await fetch(`${API_BASE}/cases`);
+        const data = await overviewRes.json();
+        const updated = data.find(c => c.id === caseId);
+        if (updated) setSelectedCase(updated);
+      } else {
+        const data = await res.json();
+        alert(`Error: ${data.detail || 'Could not reassign case'}`);
+      }
+    } catch (err) {
+      alert(`Error: ${err.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -1873,6 +1912,36 @@ function App() {
                         Add Timeline Note
                       </button>
                     </div>
+
+                    {selectedCase.status !== 'resolved' && (actorRole === 'management' || actorRole === 'admin' || selectedCase.assigned_role === actorRole) && (
+                      <div className="reassign-section" style={{ marginTop: '1.25rem', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '1rem' }}>
+                        <div className="details-section-title" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Re-assign Department / Role</div>
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                          <select 
+                            className="mobile-select-element"
+                            style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '0.4rem 0.6rem', borderRadius: '0.5rem', fontSize: '0.85rem', flex: 1, minHeight: '2.2rem' }}
+                            value={reassignTargetRole}
+                            onChange={e => setReassignTargetRole(e.target.value)}
+                          >
+                            <option value="provider_ops">Provider Operations (e-Money)</option>
+                            <option value="field_officer">Field Officer (Physical Cash)</option>
+                            <option value="risk_analyst">Risk Analyst (Anomaly / Fraud)</option>
+                          </select>
+                          <button 
+                            className="btn btn-secondary"
+                            style={{ minHeight: '2.2rem', padding: '0 1rem', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
+                            onClick={() => {
+                              const note = window.prompt("Enter a reassignment comment/note for the timeline:");
+                              if (note !== null) {
+                                handleReassignCase(selectedCase.id, reassignTargetRole, note);
+                              }
+                            }}
+                          >
+                            Re-assign
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Action Transition Note Form */}

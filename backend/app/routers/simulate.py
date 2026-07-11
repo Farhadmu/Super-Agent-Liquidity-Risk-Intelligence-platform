@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 
 from backend.app.models.database import get_db
-from backend.app.models.schemas import Provider, Agent, ProviderBalance, Transaction, LiquidityForecast
+from backend.app.models.schemas import Provider, Agent, ProviderBalance, Transaction, LiquidityForecast, CashPosition
 from backend.app.simulator.generate_data import seed_database
 from backend.app.services.liquidity import compute_liquidity_forecast
 from backend.app.services.anomaly import check_transaction_for_anomaly
@@ -40,8 +40,13 @@ def apply_custom_scenario(payload: CustomScenarioInput, db: Session = Depends(ge
     if not agent:
         raise HTTPException(status_code=404, detail="Agent not found")
 
-    # 1. Update shared cash pool balance
-    agent.shared_cash = Decimal(f"{payload.shared_cash:.2f}")
+    # 1. Update shared cash pool balance (CashPosition)
+    cash_pos = CashPosition(
+        agent_id=agent.id,
+        amount=Decimal(f"{payload.shared_cash:.2f}"),
+        recorded_at=datetime.utcnow()
+    )
+    db.add(cash_pos)
 
     # Helper to update provider balance
     def update_provider_balance(provider_name: str, balance_val: float, is_delayed: bool):

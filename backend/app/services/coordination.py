@@ -142,3 +142,26 @@ def log_case_event(db: Session, case_id: int, event_type: str, actor_role: str, 
     db.commit()
     db.refresh(event)
     return event
+
+def reassign_case(db: Session, case_id: int, actor_role: str, new_role: str, note: str):
+    """
+    Reassigns the case to another department (role) and logs a timeline event.
+    """
+    case = db.query(Case).filter(Case.id == case_id).first()
+    if not case:
+        return None
+    
+    old_role = case.assigned_role
+    case.assigned_role = new_role
+    case.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(case)
+    
+    log_case_event(
+        db=db,
+        case_id=case_id,
+        event_type='reassigned',
+        actor_role=actor_role,
+        note=f"Reassigned from {old_role} to {new_role}. Note: {note}"
+    )
+    return case
