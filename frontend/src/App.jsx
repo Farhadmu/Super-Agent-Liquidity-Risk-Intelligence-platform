@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react';
 
 const API_BASE = 'http://localhost:8080';
 
-const getTrendData = (agentCode, hours = 2) => {
+const getTrendData = (agentOverview, hours = 2) => {
+  if (!agentOverview) return [];
+  const agentCode = agentOverview.agent_code;
+
   const numPoints = 6;
   const labels = [];
   for (let i = numPoints - 1; i >= 0; i--) {
@@ -16,6 +19,24 @@ const getTrendData = (agentCode, hours = 2) => {
         labels.push(`${val.toFixed(1)}h ago`);
       }
     }
+  }
+
+  let liveCash = agentOverview.shared_cash;
+  let liveBkash = 0;
+  let liveNagad = 0;
+  let liveRocket = 0;
+
+  if (agentOverview.provider_balances) {
+    agentOverview.provider_balances.forEach(pb => {
+      const name = pb.provider_name.toLowerCase();
+      if (name.includes('bkash')) {
+        liveBkash = pb.balance;
+      } else if (name.includes('nagad')) {
+        liveNagad = pb.balance;
+      } else if (name.includes('rocket')) {
+        liveRocket = pb.balance;
+      }
+    });
   }
 
   let baseCash = 120000;
@@ -41,6 +62,16 @@ const getTrendData = (agentCode, hours = 2) => {
   }
 
   return Array.from({ length: numPoints }).map((_, index) => {
+    if (index === numPoints - 1) {
+      return {
+        label: 'Now',
+        cash: Math.max(0, Math.round(liveCash)),
+        bkash: Math.max(0, Math.round(liveBkash)),
+        nagad: Math.max(0, Math.round(liveNagad)),
+        rocket: Math.max(0, Math.round(liveRocket))
+      };
+    }
+
     const fraction = index / (numPoints - 1);
     let cash = baseCash;
     let bkash = baseBkash;
@@ -738,7 +769,7 @@ function App() {
                         <line x1="40" y1="170" x2="560" y2="170" stroke="rgba(255,255,255,0.08)" />
 
                         {(() => {
-                          const points = getTrendData(agentOverview.agent_code, trendHours);
+                          const points = getTrendData(agentOverview, trendHours);
                           const maxVal = agentOverview.agent_code === 'A001' ? 160000 : 130000;
                           
                           const getCoords = (key) => points.map((p, idx) => {
