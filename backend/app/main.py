@@ -7,6 +7,18 @@ from backend.app.routers import agents, cases, simulate, metrics
 # Initialize all database tables on startup
 Base.metadata.create_all(bind=engine)
 
+from backend.app.models.schemas import Agent
+from backend.app.simulator.generate_data import seed_database
+from backend.app.models.database import SessionLocal
+
+db = SessionLocal()
+try:
+    if db.query(Agent).count() == 0:
+        print("Database is empty. Auto-seeding baseline data...")
+        seed_database()
+finally:
+    db.close()
+
 app = FastAPI(
     title="Multi-Provider Super Agent Backend",
     description="FastAPI gateway managing liquidity forecasts, transaction anomaly detection, and operational coordination cases.",

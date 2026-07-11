@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 
-const API_BASE = 'http://localhost:8080';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
 const AGENTS_LIST = [
   { id: 1, code: 'A001', name: 'Sajib Telecom (Dhaka)' },
@@ -378,11 +378,14 @@ function App() {
 
   const handleLoginSubmit = (e) => {
     e.preventDefault();
-    if (loginUsername.trim() === selectedLoginUser.username && loginPassword === selectedLoginUser.password) {
-      handleLogin(selectedLoginUser);
+    const matchedUser = DEMO_USERS.find(
+      user => user.username === loginUsername.trim() && user.password === loginPassword
+    );
+    if (matchedUser) {
+      handleLogin(matchedUser);
       return;
     }
-    setLoginError('Demo credentials do not match the selected role.');
+    setLoginError('Invalid demo credentials.');
   };
 
   const handleLogout = () => {
@@ -675,7 +678,7 @@ function App() {
                     value={loginRoleId}
                     onChange={e => handleLoginRoleChange(e.target.value)}
                   >
-                    {DEMO_USERS.map(user => (
+                    {DEMO_USERS.filter(user => user.role !== 'admin').map(user => (
                       <option key={user.id} value={user.id}>{user.roleLabel}</option>
                     ))}
                   </select>
@@ -736,7 +739,7 @@ function App() {
               </div>
 
               <div className="login-role-grid">
-                {DEMO_USERS.map(user => (
+                {DEMO_USERS.filter(user => user.role !== 'admin').map(user => (
                   <button
                     key={user.id}
                     className={`login-role-card ${loginRoleId === user.id ? 'active' : ''}`}

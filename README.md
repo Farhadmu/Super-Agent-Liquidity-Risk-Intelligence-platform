@@ -26,8 +26,10 @@ project/
 ├── docs/
 │   ├── architecture-diagram.md
 │   ├── data-simulation-note.md
+│   ├── deployment.md              # Render cloud deployment instructions
 │   ├── final-presentation.md      # Pitch slide-deck & presentation script
 │   └── responsible-design-note.md
+├── render.yaml                    # Render Blueprint 1-click config
 └── README.md
 ```
 
