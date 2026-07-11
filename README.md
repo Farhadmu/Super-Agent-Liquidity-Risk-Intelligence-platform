@@ -24,6 +24,7 @@ project/
 ├── data/
 │   └── synthetic/              # Raw CSV dumps for judges inspection
 ├── docs/
+│   ├── api-documentation.md       # Full REST API Catalog & Swagger details
 │   ├── architecture-diagram.md
 │   ├── data-simulation-note.md
 │   ├── deployment.md              # Render cloud deployment instructions
