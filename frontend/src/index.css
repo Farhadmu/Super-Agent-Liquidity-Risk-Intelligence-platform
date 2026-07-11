@@ -1598,6 +1598,152 @@ header {
 }
 
 /* ============================================================
+   Interactive SVG Trend Visualizer
+   ============================================================ */
+.trend-visualizer-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.trend-visualizer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.trend-visualizer-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.trend-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.trend-filter-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.btn-group-toggle {
+  display: flex;
+  background: rgba(31, 41, 55, 0.6);
+  border: 1px solid var(--bg-card-border);
+  padding: 0.15rem;
+  border-radius: 0.5rem;
+  gap: 0.15rem;
+}
+
+.toggle-btn-small {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  padding: 0.25rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 0.35rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.toggle-btn-small.active {
+  background: var(--color-accent);
+  color: #fff;
+}
+
+.toggle-btn-small:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+}
+
+.provider-tags-group {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.provider-tag-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.provider-tag-indicator {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.provider-tag-btn:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Glassmorphic Chart Tooltip */
+.trend-tooltip {
+  pointer-events: none;
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  font-size: 0.75rem;
+  line-height: 1.4;
+  text-align: left;
+  background: rgba(17, 24, 39, 0.9);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  min-width: 140px;
+  transition: left 0.15s ease-out;
+}
+
+.trend-tooltip-title {
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 0.2rem;
+  color: #fff;
+}
+
+.trend-tooltip-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.trend-tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.text-cash { color: #93C5FD; }
+.text-bkash { color: #F472B6; }
+.text-nagad { color: #FDBA74; }
+.text-rocket { color: #E9D5FF; }
+
+/* ============================================================
    Small-device UX polish only
    ============================================================ */
 @media (max-width: 640px) {

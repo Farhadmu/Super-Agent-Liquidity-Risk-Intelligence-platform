@@ -2,44 +2,70 @@ import React, { useState, useEffect } from 'react';
 
 const API_BASE = 'http://localhost:8080';
 
-const getTrendData = (agentCode) => {
-  if (agentCode === 'A001') {
-    return [
-      { label: '60m ago', cash: 150000, bkash: 45000, nagad: 80000, rocket: 60000 },
-      { label: '48m ago', cash: 150000, bkash: 37000, nagad: 80000, rocket: 60000 },
-      { label: '36m ago', cash: 150000, bkash: 29000, nagad: 80000, rocket: 60000 },
-      { label: '24m ago', cash: 150000, bkash: 21000, nagad: 80000, rocket: 60000 },
-      { label: '12m ago', cash: 150000, bkash: 13000, nagad: 80000, rocket: 60000 },
-      { label: 'Now',     cash: 150000, bkash: 5000,  nagad: 80000, rocket: 60000 }
-    ];
-  } else if (agentCode === 'A002') {
-    return [
-      { label: '60m ago', cash: 80000, bkash: 120000, nagad: 90000, rocket: 40000 },
-      { label: '48m ago', cash: 65000, bkash: 120000, nagad: 90000, rocket: 40000 },
-      { label: '36m ago', cash: 50000, bkash: 120000, nagad: 90000, rocket: 40000 },
-      { label: '24m ago', cash: 35000, bkash: 120000, nagad: 90000, rocket: 40000 },
-      { label: '12m ago', cash: 20000, bkash: 120000, nagad: 90000, rocket: 40000 },
-      { label: 'Now',     cash: 8000,  bkash: 120000, nagad: 90000, rocket: 40000 }
-    ];
-  } else if (agentCode === 'A003') {
-    return [
-      { label: '60m ago', cash: 100000, bkash: 40000, nagad: 45000, rocket: 80000 },
-      { label: '48m ago', cash: 100000, bkash: 40000, nagad: 45000, rocket: 80000 },
-      { label: '36m ago', cash: 100000, bkash: 40000, nagad: 45000, rocket: 80000 },
-      { label: '24m ago', cash: 100000, bkash: 40000, nagad: 45000, rocket: 80000 },
-      { label: '12m ago', cash: 100000, bkash: 40000, nagad: 45000, rocket: 80000 },
-      { label: 'Now',     cash: 100000, bkash: 40000, nagad: 45000, rocket: 80000 }
-    ];
-  } else {
-    return [
-      { label: '60m ago', cash: 121000, bkash: 74000, nagad: 66000, rocket: 54000 },
-      { label: '48m ago', cash: 119500, bkash: 75500, nagad: 64800, rocket: 55200 },
-      { label: '36m ago', cash: 122000, bkash: 73000, nagad: 65100, rocket: 54800 },
-      { label: '24m ago', cash: 118000, bkash: 77000, nagad: 63900, rocket: 56100 },
-      { label: '12m ago', cash: 120500, bkash: 74500, nagad: 65200, rocket: 54900 },
-      { label: 'Now',     cash: 120000, bkash: 75000, nagad: 65000, rocket: 55000 }
-    ];
+const getTrendData = (agentCode, hours = 2) => {
+  const numPoints = 6;
+  const labels = [];
+  for (let i = numPoints - 1; i >= 0; i--) {
+    if (i === 0) {
+      labels.push('Now');
+    } else {
+      const val = (hours * i) / (numPoints - 1);
+      if (hours <= 2) {
+        labels.push(`${Math.round(val * 60)}m ago`);
+      } else {
+        labels.push(`${val.toFixed(1)}h ago`);
+      }
+    }
   }
+
+  let baseCash = 120000;
+  let baseBkash = 75000;
+  let baseNagad = 65000;
+  let baseRocket = 55000;
+
+  if (agentCode === 'A001') {
+    baseCash = 150000;
+    baseBkash = 45000;
+    baseNagad = 80000;
+    baseRocket = 60000;
+  } else if (agentCode === 'A002') {
+    baseCash = 80000;
+    baseBkash = 120000;
+    baseNagad = 90000;
+    baseRocket = 40000;
+  } else if (agentCode === 'A003') {
+    baseCash = 100000;
+    baseBkash = 40000;
+    baseNagad = 45000;
+    baseRocket = 80000;
+  }
+
+  return Array.from({ length: numPoints }).map((_, index) => {
+    const fraction = index / (numPoints - 1);
+    let cash = baseCash;
+    let bkash = baseBkash;
+    let nagad = baseNagad;
+    let rocket = baseRocket;
+
+    if (agentCode === 'A001') {
+      bkash = Math.round(baseBkash - fraction * 40000);
+    } else if (agentCode === 'A002') {
+      cash = Math.round(baseCash - fraction * 72000);
+    }
+
+    if (agentCode !== 'A001') bkash = Math.round(baseBkash + (Math.sin(index) * 2000));
+    if (agentCode !== 'A002') cash = Math.round(baseCash + (Math.cos(index) * 3000));
+    nagad = Math.round(baseNagad + (Math.sin(index * 1.5) * 1500));
+    rocket = Math.round(baseRocket + (Math.cos(index * 2) * 1000));
+
+    return {
+      label: labels[index],
+      cash: Math.max(0, cash),
+      bkash: Math.max(0, bkash),
+      nagad: Math.max(0, nagad),
+      rocket: Math.max(0, rocket)
+    };
+  });
 };
 
 function App() {
@@ -81,6 +107,11 @@ function App() {
 
   const [showAgentInfoModal, setShowAgentInfoModal] = useState(false);
   const [showActionsDropdown, setShowActionsDropdown] = useState(false);
+
+  // Trend graph visualizer interactive states
+  const [trendHours, setTrendHours] = useState(2);
+  const [trendProviders, setTrendProviders] = useState(['cash', 'bkash', 'nagad', 'rocket']);
+  const [hoveredPoint, setHoveredPoint] = useState(null);
 
   // Escape key to close modals
   useEffect(() => {
@@ -590,24 +621,71 @@ function App() {
                     ))}
                   </div>
 
-                  {/* 2-Hour Wallet & Cash Trend Chart */}
-                  <div className="glass-card" style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      📈 2-Hour Liquidity Trend Visualizer
-                    </h3>
-                    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                        <span style={{ display: 'inline-block', width: '12px', height: '3px', background: '#3B82F6' }}></span> Shared Cash
-                      </span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                        <span style={{ display: 'inline-block', width: '12px', height: '3px', background: '#e2125a' }}></span> bKash E-Money
-                      </span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                        <span style={{ display: 'inline-block', width: '12px', height: '3px', background: '#f37021' }}></span> Nagad E-Money
-                      </span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                        <span style={{ display: 'inline-block', width: '12px', height: '3px', background: '#8c2d82' }}></span> Rocket E-Money
-                      </span>
+                  {/* Wallet & Cash Trend Chart */}
+                  <div className="glass-card trend-visualizer-card" style={{ marginTop: '1.5rem' }}>
+                    <div className="trend-visualizer-header">
+                      <h3 className="trend-visualizer-title">
+                        📈 {trendHours}-Hour Liquidity Trend Visualizer
+                      </h3>
+                      
+                      {/* Hours Filter Toggles */}
+                      <div className="trend-filter-group">
+                        <span className="trend-filter-label">Time Range:</span>
+                        <div className="btn-group-toggle">
+                          {[2, 6, 12, 24].map(h => (
+                            <button
+                              key={h}
+                              className={`toggle-btn-small ${trendHours === h ? 'active' : ''}`}
+                              onClick={() => {
+                                setTrendHours(h);
+                                setHoveredPoint(null);
+                              }}
+                            >
+                              {h}h
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Providers Filter Group */}
+                    <div className="trend-filter-group" style={{ margin: '0.25rem 0 0.75rem' }}>
+                      <span className="trend-filter-label">Providers:</span>
+                      <div className="provider-tags-group">
+                        {[
+                          { key: 'cash', name: 'Shared Cash', color: '#3B82F6' },
+                          { key: 'bkash', name: 'bKash', color: '#e2125a' },
+                          { key: 'nagad', name: 'Nagad', color: '#f37021' },
+                          { key: 'rocket', name: 'Rocket', color: '#8c2d82' }
+                        ].map(p => {
+                          const isVisible = trendProviders.includes(p.key);
+                          return (
+                            <button
+                              key={p.key}
+                              className={`provider-tag-btn ${isVisible ? 'active' : ''}`}
+                              style={{
+                                borderColor: isVisible ? p.color : 'rgba(255,255,255,0.15)',
+                                background: isVisible ? `rgba(${p.key === 'cash' ? '59,130,246' : p.key === 'bkash' ? '226,18,90' : p.key === 'nagad' ? '243,112,33' : '140,45,130'}, 0.15)` : 'transparent',
+                                color: isVisible ? '#fff' : 'var(--text-secondary)'
+                              }}
+                              onClick={() => {
+                                if (isVisible) {
+                                  if (trendProviders.length > 1) {
+                                    setTrendProviders(trendProviders.filter(k => k !== p.key));
+                                    setHoveredPoint(null);
+                                  }
+                                } else {
+                                  setTrendProviders([...trendProviders, p.key]);
+                                  setHoveredPoint(null);
+                                }
+                              }}
+                            >
+                              <span className="provider-tag-indicator" style={{ backgroundColor: p.color }}></span>
+                              {p.name}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
 
                     <div style={{ position: 'relative', width: '100%', height: '220px' }}>
@@ -627,7 +705,7 @@ function App() {
                         <line x1="40" y1="170" x2="560" y2="170" stroke="rgba(255,255,255,0.08)" />
 
                         {(() => {
-                          const points = getTrendData(agentOverview.agent_code);
+                          const points = getTrendData(agentOverview.agent_code, trendHours);
                           const maxVal = agentOverview.agent_code === 'A001' ? 160000 : 130000;
                           
                           const getCoords = (key) => points.map((p, idx) => {
@@ -646,51 +724,171 @@ function App() {
 
                           return (
                             <>
-                              {agentOverview.agent_code === 'A001' && (
-                                <path d={makeAreaPath(bkashCoords)} fill="url(#bkashGrad)" />
+                              {/* Area Fills */}
+                              {trendProviders.includes('bkash') && agentOverview.agent_code === 'A001' && (
+                                <path d={makeAreaPath(bkashCoords)} fill="url(#bkashGrad)" pointerEvents="none" />
                               )}
-                              {agentOverview.agent_code === 'A002' && (
-                                <path d={makeAreaPath(cashCoords)} fill="url(#cashGrad)" />
+                              {trendProviders.includes('cash') && agentOverview.agent_code === 'A002' && (
+                                <path d={makeAreaPath(cashCoords)} fill="url(#cashGrad)" pointerEvents="none" />
                               )}
 
-                              <path d={makePath(cashCoords)} fill="none" stroke="#3B82F6" strokeWidth="2.5" />
-                              <path d={makePath(bkashCoords)} fill="none" stroke="#e2125a" strokeWidth="2" strokeDasharray={agentOverview.agent_code === 'A001' ? "0" : "3"} />
-                              <path d={makePath(nagadCoords)} fill="none" stroke="#f37021" strokeWidth="2" strokeDasharray="3" />
-                              <path d={makePath(rocketCoords)} fill="none" stroke="#8c2d82" strokeWidth="2" strokeDasharray="3" />
+                              {/* Trend Lines */}
+                              {trendProviders.includes('cash') && (
+                                <path d={makePath(cashCoords)} fill="none" stroke="#3B82F6" strokeWidth="2.5" pointerEvents="none" />
+                              )}
+                              {trendProviders.includes('bkash') && (
+                                <path d={makePath(bkashCoords)} fill="none" stroke="#e2125a" strokeWidth="2" strokeDasharray={agentOverview.agent_code === 'A001' ? "0" : "3"} pointerEvents="none" />
+                              )}
+                              {trendProviders.includes('nagad') && (
+                                <path d={makePath(nagadCoords)} fill="none" stroke="#f37021" strokeWidth="2" strokeDasharray="3" pointerEvents="none" />
+                              )}
+                              {trendProviders.includes('rocket') && (
+                                <path d={makePath(rocketCoords)} fill="none" stroke="#8c2d82" strokeWidth="2" strokeDasharray="3" pointerEvents="none" />
+                              )}
 
+                              {/* Dotted Vertical Hover Guide */}
+                              {hoveredPoint && (
+                                <line 
+                                  x1={hoveredPoint.x} 
+                                  y1={10} 
+                                  x2={hoveredPoint.x} 
+                                  y2={170} 
+                                  stroke="rgba(255, 255, 255, 0.25)" 
+                                  strokeDasharray="2" 
+                                  pointerEvents="none" 
+                                />
+                              )}
+
+                              {/* Static Points / Highlight Circles */}
                               {points.map((p, idx) => {
                                 const cc = cashCoords[idx];
                                 const bc = bkashCoords[idx];
+                                const nc = nagadCoords[idx];
+                                const rc = rocketCoords[idx];
+                                const isHovered = hoveredPoint && hoveredPoint.label === p.label;
+
                                 return (
                                   <g key={idx}>
                                     <text x={cc.x} y="192" fill="var(--text-secondary)" fontSize="10" textAnchor="middle">{p.label}</text>
-                                    {agentOverview.agent_code === 'A002' && (
-                                      <circle cx={cc.x} cy={cc.y} r="4" fill="#3B82F6" stroke="#fff" strokeWidth="1" />
+                                    
+                                    {/* Default data circles for key scenarios */}
+                                    {!hoveredPoint && trendProviders.includes('cash') && agentOverview.agent_code === 'A002' && (
+                                      <circle cx={cc.x} cy={cc.y} r="4" fill="#3B82F6" stroke="#fff" strokeWidth="1" pointerEvents="none" />
                                     )}
-                                    {agentOverview.agent_code === 'A001' && (
-                                      <circle cx={bc.x} cy={bc.y} r="4" fill="#e2125a" stroke="#fff" strokeWidth="1" />
+                                    {!hoveredPoint && trendProviders.includes('bkash') && agentOverview.agent_code === 'A001' && (
+                                      <circle cx={bc.x} cy={bc.y} r="4" fill="#e2125a" stroke="#fff" strokeWidth="1" pointerEvents="none" />
+                                    )}
+
+                                    {/* Dynamic Highlight Circles on Hover */}
+                                    {isHovered && trendProviders.includes('cash') && (
+                                      <circle cx={cc.x} cy={cc.y} r="6" fill="#3B82F6" stroke="#fff" strokeWidth="2" pointerEvents="none" />
+                                    )}
+                                    {isHovered && trendProviders.includes('bkash') && (
+                                      <circle cx={bc.x} cy={bc.y} r="6" fill="#e2125a" stroke="#fff" strokeWidth="2" pointerEvents="none" />
+                                    )}
+                                    {isHovered && trendProviders.includes('nagad') && (
+                                      <circle cx={nc.x} cy={nc.y} r="6" fill="#f37021" stroke="#fff" strokeWidth="2" pointerEvents="none" />
+                                    )}
+                                    {isHovered && trendProviders.includes('rocket') && (
+                                      <circle cx={rc.x} cy={rc.y} r="6" fill="#8c2d82" stroke="#fff" strokeWidth="2" pointerEvents="none" />
                                     )}
                                   </g>
                                 );
                               })}
 
-                              <text x={bkashCoords[0].x + 5} y={bkashCoords[0].y - 5} fill="#e2125a" fontSize="9" fontWeight="bold">
-                                {agentOverview.agent_code === 'A001' ? 'bkash: 45k' : ''}
-                              </text>
-                              <text x={bkashCoords[5].x - 5} y={bkashCoords[5].y - 8} fill="#e2125a" fontSize="9" fontWeight="bold" textAnchor="end">
-                                {agentOverview.agent_code === 'A001' ? 'DEPLETED: 5k BDT' : ''}
-                              </text>
+                              {/* Static Scenario Labels (only shown when not hovering for cleaner look) */}
+                              {!hoveredPoint && (
+                                <>
+                                  {trendProviders.includes('bkash') && (
+                                    <>
+                                      <text x={bkashCoords[0].x + 5} y={bkashCoords[0].y - 5} fill="#e2125a" fontSize="9" fontWeight="bold">
+                                        {agentOverview.agent_code === 'A001' ? 'bkash: 45k' : ''}
+                                      </text>
+                                      <text x={bkashCoords[5].x - 5} y={bkashCoords[5].y - 8} fill="#e2125a" fontSize="9" fontWeight="bold" textAnchor="end">
+                                        {agentOverview.agent_code === 'A001' ? 'DEPLETED: 5k BDT' : ''}
+                                      </text>
+                                    </>
+                                  )}
+                                  {trendProviders.includes('cash') && (
+                                    <>
+                                      <text x={cashCoords[0].x + 5} y={cashCoords[0].y - 5} fill="#3B82F6" fontSize="9" fontWeight="bold">
+                                        {agentOverview.agent_code === 'A002' ? 'Cash Box: 80k' : ''}
+                                      </text>
+                                      <text x={cashCoords[5].x - 5} y={cashCoords[5].y - 8} fill="#3B82F6" fontSize="9" fontWeight="bold" textAnchor="end">
+                                        {agentOverview.agent_code === 'A002' ? 'DEPLETED: 8k BDT' : ''}
+                                      </text>
+                                    </>
+                                  )}
+                                </>
+                              )}
 
-                              <text x={cashCoords[0].x + 5} y={cashCoords[0].y - 5} fill="#3B82F6" fontSize="9" fontWeight="bold">
-                                {agentOverview.agent_code === 'A002' ? 'Cash Box: 80k' : ''}
-                              </text>
-                              <text x={cashCoords[5].x - 5} y={cashCoords[5].y - 8} fill="#3B82F6" fontSize="9" fontWeight="bold" textAnchor="end">
-                                {agentOverview.agent_code === 'A002' ? 'DEPLETED: 8k BDT' : ''}
-                              </text>
+                              {/* Invisible interactive column trigger rects */}
+                              {points.map((p, idx) => {
+                                const x = 40 + idx * 104;
+                                return (
+                                  <rect
+                                    key={`hover-col-${idx}`}
+                                    x={x - 52}
+                                    y={10}
+                                    width={104}
+                                    height={180}
+                                    fill="transparent"
+                                    style={{ cursor: 'pointer' }}
+                                    onMouseEnter={() => setHoveredPoint({
+                                      x,
+                                      label: p.label,
+                                      cash: p.cash,
+                                      bkash: p.bkash,
+                                      nagad: p.nagad,
+                                      rocket: p.rocket
+                                    })}
+                                    onMouseMove={() => setHoveredPoint({
+                                      x,
+                                      label: p.label,
+                                      cash: p.cash,
+                                      bkash: p.bkash,
+                                      nagad: p.nagad,
+                                      rocket: p.rocket
+                                    })}
+                                    onMouseLeave={() => setHoveredPoint(null)}
+                                  />
+                                );
+                              })}
                             </>
                           );
                         })()}
                       </svg>
+
+                      {/* Tooltip Overlay */}
+                      {hoveredPoint && (
+                        <div className="trend-tooltip glass-card">
+                          <div className="trend-tooltip-title">
+                            🕒 {hoveredPoint.label}
+                          </div>
+                          <div className="trend-tooltip-grid">
+                            {trendProviders.includes('cash') && (
+                              <div className="trend-tooltip-row text-cash">
+                                <span>🔹 Cash:</span> <strong>{hoveredPoint.cash.toLocaleString()} BDT</strong>
+                              </div>
+                            )}
+                            {trendProviders.includes('bkash') && (
+                              <div className="trend-tooltip-row text-bkash">
+                                <span>💗 bKash:</span> <strong>{hoveredPoint.bkash.toLocaleString()} BDT</strong>
+                              </div>
+                            )}
+                            {trendProviders.includes('nagad') && (
+                              <div className="trend-tooltip-row text-nagad">
+                                <span>🔸 Nagad:</span> <strong>{hoveredPoint.nagad.toLocaleString()} BDT</strong>
+                              </div>
+                            )}
+                            {trendProviders.includes('rocket') && (
+                              <div className="trend-tooltip-row text-rocket">
+                                <span>🔮 Rocket:</span> <strong>{hoveredPoint.rocket.toLocaleString()} BDT</strong>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
