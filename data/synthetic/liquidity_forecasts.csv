@@ -1,4 +1,4 @@
 id,agent_id,provider_id,risk_level,eta_minutes,confidence,reason,computed_at
-1,1,1.0,high,6,0.6,High depletion risk. Projected shortage in 6 minutes due to high net burn rate.,2026-07-11 05:06:36.613165
-2,2,,high,3,0.5,High depletion risk. Projected shortage in 3 minutes due to high net burn rate.,2026-07-11 05:06:36.613165
-3,4,2.0,medium,240,0.8,Nagad balance is decreasing steadily.,2026-07-11 04:06:36.613165
+1,1,1.0,high,6,0.6,High depletion risk. Projected shortage in 6 minutes due to high net burn rate.,2026-07-11 11:39:43.403951
+2,2,,high,3,0.5,High depletion risk. Projected shortage in 3 minutes due to high net burn rate.,2026-07-11 11:39:43.403951
+3,4,2.0,medium,240,0.8,Nagad balance is decreasing steadily.,2026-07-11 10:39:43.403951

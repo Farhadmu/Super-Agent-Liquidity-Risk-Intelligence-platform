@@ -1,9 +1,9 @@
 id,source_type,source_id,agent_id,provider_id,severity,status,assigned_role,assigned_to,recommended_action,created_at,updated_at
-1,liquidity,1,1,1.0,urgent,open,provider_ops,,"Contact bKash distributor to top up e-money wallet, or request transfer from connected bank portal.",2026-07-11 05:06:36.924993,2026-07-11 05:06:36.924995
-2,liquidity,2,2,,urgent,open,field_officer,,"Instruct field officer to arrange cash support for Mayer Doa Enterprise, or coordinate an approved pickup from a nearby agent.",2026-07-11 05:06:36.937078,2026-07-11 05:06:36.937080
-3,anomaly,1,2,1.0,review,open,risk_analyst,,"Review transaction history for CUST_SUSPECT. Do not block user wallet, but contact agent to verify physical identity.",2026-07-11 05:06:36.941394,2026-07-11 05:06:36.941395
-4,anomaly,2,2,1.0,review,open,risk_analyst,,"Review transaction history for CUST_SUSPECT. Do not block user wallet, but contact agent to verify physical identity.",2026-07-11 05:06:36.945177,2026-07-11 05:06:36.945178
-5,anomaly,3,2,1.0,review,open,risk_analyst,,"Review transaction history for CUST_SUSPECT. Do not block user wallet, but contact agent to verify physical identity.",2026-07-11 05:06:36.949227,2026-07-11 05:06:36.949229
-6,anomaly,4,2,1.0,review,open,risk_analyst,,"Review transaction history for CUST_SUSPECT. Do not block user wallet, but contact agent to verify physical identity.",2026-07-11 05:06:36.956211,2026-07-11 05:06:36.956213
-7,anomaly,5,2,1.0,review,open,risk_analyst,,"Review transaction history for CUST_SUSPECT. Do not block user wallet, but contact agent to verify physical identity.",2026-07-11 05:06:36.960283,2026-07-11 05:06:36.960284
-8,liquidity,3,4,2.0,review,acknowledged,provider_ops,Officer Tanvir,Prepare Nagad top-up or coordinate cash-out balance check.,2026-07-11 05:06:36.967983,2026-07-11 05:06:36.973408
+1,liquidity,1,1,1.0,urgent,open,provider_ops,,"Contact bKash distributor to top up e-money wallet, or request transfer from connected bank portal.",2026-07-11 11:39:43.955813,2026-07-11 11:39:43.955816
+2,liquidity,2,2,,urgent,open,field_officer,,"Instruct field officer to arrange cash support for Mayer Doa Enterprise, or coordinate an approved pickup from a nearby agent.",2026-07-11 11:39:43.970388,2026-07-11 11:39:43.970390
+3,anomaly,1,2,1.0,review,open,risk_analyst,,"Review transaction history for CUST_SUSPECT. Do not block user wallet, but contact agent to verify physical identity.",2026-07-11 11:39:43.975829,2026-07-11 11:39:43.975834
+4,anomaly,2,2,1.0,review,open,risk_analyst,,"Review transaction history for CUST_SUSPECT. Do not block user wallet, but contact agent to verify physical identity.",2026-07-11 11:39:43.981346,2026-07-11 11:39:43.981348
+5,anomaly,3,2,1.0,review,open,risk_analyst,,"Review transaction history for CUST_SUSPECT. Do not block user wallet, but contact agent to verify physical identity.",2026-07-11 11:39:44.010044,2026-07-11 11:39:44.010046
+6,anomaly,4,2,1.0,review,open,risk_analyst,,"Review transaction history for CUST_SUSPECT. Do not block user wallet, but contact agent to verify physical identity.",2026-07-11 11:39:44.014692,2026-07-11 11:39:44.014694
+7,anomaly,5,2,1.0,review,open,risk_analyst,,"Review transaction history for CUST_SUSPECT. Do not block user wallet, but contact agent to verify physical identity.",2026-07-11 11:39:44.018203,2026-07-11 11:39:44.018205
+8,liquidity,3,4,2.0,review,acknowledged,provider_ops,Officer Tanvir,Prepare Nagad top-up or coordinate cash-out balance check.,2026-07-11 11:39:44.027070,2026-07-11 11:39:44.033194

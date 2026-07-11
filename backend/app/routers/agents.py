@@ -9,6 +9,18 @@ from backend.app.services.llm_advisor import generate_trilingual_alerts
 
 router = APIRouter(prefix="/agents", tags=["agents"])
 
+def build_liquidity_alert(agent_code: str, provider_name: str, forecast: Dict[str, Any]):
+    details = {
+        "agent_code": agent_code,
+        "provider_name": provider_name,
+        "current_balance": forecast["current_balance"],
+        "eta_minutes": forecast["eta_minutes"],
+        "risk_level": forecast["risk_level"],
+        "confidence": forecast["confidence"],
+        "reason": forecast["reason"]
+    }
+    return generate_trilingual_alerts("liquidity", details)
+
 @router.get("/{agent_id}/overview")
 def get_agent_overview(agent_id: int, db: Session = Depends(get_db)):
     agent = db.query(Agent).filter(Agent.id == agent_id).first()
@@ -66,14 +78,7 @@ def get_agent_liquidity_forecast(agent_id: int, db: Session = Depends(get_db)):
     # 1. Shared cash pool forecast
     cash_forecast = compute_liquidity_forecast(db, agent_id, provider_id=None)
     
-    cash_details = {
-        "agent_code": agent.agent_code,
-        "provider_name": "Shared Cash",
-        "current_balance": cash_forecast["current_balance"],
-        "eta_minutes": cash_forecast["eta_minutes"],
-        "risk_level": cash_forecast["risk_level"]
-    }
-    cash_alerts = generate_trilingual_alerts("liquidity", cash_details)
+    cash_alerts = build_liquidity_alert(agent.agent_code, "Shared Cash", cash_forecast)
     
     forecasts.append({
         "provider_id": None,
@@ -98,14 +103,7 @@ def get_agent_liquidity_forecast(agent_id: int, db: Session = Depends(get_db)):
             
         p_forecast = compute_liquidity_forecast(db, agent_id, provider_id=p.id, data_lag_simulation=data_lag)
         
-        p_details = {
-            "agent_code": agent.agent_code,
-            "provider_name": p.name,
-            "current_balance": p_forecast["current_balance"],
-            "eta_minutes": p_forecast["eta_minutes"],
-            "risk_level": p_forecast["risk_level"]
-        }
-        p_alerts = generate_trilingual_alerts("liquidity", p_details)
+        p_alerts = build_liquidity_alert(agent.agent_code, p.name, p_forecast)
         
         forecasts.append({
             "provider_id": p.id,

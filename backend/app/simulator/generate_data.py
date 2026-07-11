@@ -58,7 +58,7 @@ def seed_database():
         normal_txs = []
         for agent in agents:
             current_time = now - timedelta(days=7)
-            while current_time < now - timedelta(hours=3):
+            while current_time < now - timedelta(hours=5):
                 # Normal business hours: 9 AM to 10 PM
                 # Step forward random minutes
                 current_time += timedelta(minutes=random.randint(15, 90))

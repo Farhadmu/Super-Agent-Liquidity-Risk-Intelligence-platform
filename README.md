@@ -26,6 +26,7 @@ project/
 ├── docs/
 │   ├── architecture-diagram.md
 │   ├── data-simulation-note.md
+│   ├── final-presentation.md      # Pitch slide-deck & presentation script
 │   └── responsible-design-note.md
 └── README.md
 ```
@@ -75,6 +76,8 @@ python backend/app/simulator/export_csv.py
 uvicorn backend.app.main:app --host 0.0.0.0 --port 8080 --reload
 ```
 
+Optional: copy `.env.example` to `.env` and add `GEMINI_API_KEY` or `OPENAI_API_KEY` if you want live AI-generated trilingual alert text. Without keys, the app uses deterministic local fallback text so the demo still works offline.
+
 ### Step 3: Frontend Installation & Run
 Initialize node modules and start development server:
 ```bash
@@ -82,7 +85,7 @@ cd frontend
 npm install
 npm run dev -- --host 0.0.0.0 --port 3000
 ```
-Open **[http://localhost:3000/](http://localhost:3000/)** in your browser.
+Open **[http://localhost:3000/](http://localhost:3000/)** in your browser. If port `3000` is busy, Vite will print the next available local URL, usually **[http://localhost:3001/](http://localhost:3001/)**.
 
 ---
 

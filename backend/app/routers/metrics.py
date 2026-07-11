@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, desc
 from typing import Dict, Any
 from backend.app.models.database import get_db
-from backend.app.models.schemas import Transaction, AnomalyFlag, LiquidityForecast
+from backend.app.models.schemas import Agent, Provider, Transaction, AnomalyFlag, LiquidityForecast
 
 router = APIRouter(prefix="/metrics", tags=["metrics"])
 
@@ -48,13 +48,25 @@ def get_validation_metrics(db: Session = Depends(get_db)):
     # Calculate FPR
     fpr = fp / baseline_count if baseline_count > 0 else 0.0
 
-    # 3. Shortage Detection Lead Time (Scenario A)
-    latest_high_risk_forecast = db.query(LiquidityForecast).filter(
+    # 3. Shortage Detection Lead Time (Scenario A: A001 bKash)
+    scenario_agent = db.query(Agent).filter(Agent.agent_code == "A001").first()
+    scenario_provider = db.query(Provider).filter(Provider.name == "bKash").first()
+    scenario_a_forecast = None
+    if scenario_agent and scenario_provider:
+        scenario_a_forecast = db.query(LiquidityForecast).filter(
+            LiquidityForecast.agent_id == scenario_agent.id,
+            LiquidityForecast.provider_id == scenario_provider.id,
+            LiquidityForecast.risk_level == "high",
+            LiquidityForecast.eta_minutes.isnot(None)
+        ).order_by(desc(LiquidityForecast.computed_at), desc(LiquidityForecast.id)).first()
+
+    latest_high_risk_forecast = scenario_a_forecast or db.query(LiquidityForecast).filter(
         LiquidityForecast.risk_level == "high",
         LiquidityForecast.eta_minutes.isnot(None)
-    ).order_by(desc(LiquidityForecast.computed_at)).first()
+    ).order_by(desc(LiquidityForecast.computed_at), desc(LiquidityForecast.id)).first()
+
     lead_time_minutes = latest_high_risk_forecast.eta_minutes if latest_high_risk_forecast else 0
-    lead_time_info = f"Current high-risk shortage warning gives operators about {lead_time_minutes} minutes to act before projected depletion."
+    lead_time_info = f"Scenario A bKash shortage warning gives operators about {lead_time_minutes} minutes to act before projected provider-wallet depletion."
 
     # 4. Alert Explanation Coverage
     # Check what percentage of flags contain both 'evidence' and 'confidence'

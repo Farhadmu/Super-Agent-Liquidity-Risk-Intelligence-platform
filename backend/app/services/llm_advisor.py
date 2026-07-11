@@ -36,6 +36,10 @@ if os.path.exists(CACHE_PATH):
     try:
         with open(CACHE_PATH, "r", encoding="utf-8") as cache_f:
             _advisor_cache = json.load(cache_f)
+        _advisor_cache = {
+            key: value for key, value in _advisor_cache.items()
+            if not (key.startswith("liquidity:") and ":low:None" in key)
+        }
         print(f"[LLM Advisor] Loaded persistent cache containing {len(_advisor_cache)} items.")
     except Exception as e:
         print(f"[LLM Advisor] Failed to load persistent cache: {e}")
@@ -52,17 +56,17 @@ LOCAL_FALLBACKS = {
         "bKash": {
             "en": "Depletion warning: High net burn rate detected for bKash. Wallet balance is dropping rapidly.",
             "bn": "📣 বর্তমান লেনদেনের ধারা অনুযায়ী কয়েক মিনিটের মধ্যে আপনার বিকাশ ই-মানি শেষ হয়ে যেতে পারে। নিরাপদে সেবা চালু রাখতে অতিরিক্ত ই-মানি টপ-আপ করার পরামর্শ দেওয়া হচ্ছে।",
-            "banglish": "Bhai, apnar bKash wallet e-money khub druto sesh hoye jacche. Seba chalu rakhte kindly bank app theke e-money refill korun."
+            "banglish": "Apnar bKash e-money balance druto komche. Approved provider operations channel diye top-up coordinate korun."
         },
         "Shared Cash": {
             "en": "Depletion warning: High cash depletion risk for Shared Cash pool box. Refill recommended.",
-            "bn": "📣 বর্তমান লেনদেনের ধারা অনুযায়ী আপনার ড্রয়ারের নগদ টাকা শেষ হয়ে যেতে পারে। সবচেয়ে বেশি চাপ আসছে বিকাশ ক্যাশ-আউট থেকে। ২০,০০০+ টাকা অতিরিক্ত নগদ রিফিল করুন।",
-            "banglish": "Apnar cash box e taka sesh hoye jabe. bKash cash-out pressure besi. Kindly bank standard agent refilling point theke cash box fill-up korun."
+            "bn": "📣 বর্তমান লেনদেনের ধারা অনুযায়ী আপনার ড্রয়ারের নগদ টাকা দ্রুত কমতে পারে। নিরাপদভাবে সেবা চালু রাখতে অনুমোদিত ফিল্ড সাপোর্টের মাধ্যমে নগদ সহায়তা সমন্বয় করুন।",
+            "banglish": "Apnar cash box e pressure beshi. Approved field support diye cash support coordinate korun."
         },
         "default": {
-            "en": "Wallet balance warning: Feed updates lag detected or wallet balance is low.",
-            "bn": "⚠️ রকেট তথ্য সরবরাহে সাময়িক বিলম্ব হচ্ছে। সঠিক পূর্বাভাসের জন্য অপেক্ষা করা হচ্ছে, অনুগ্রহ করে সর্বশেষ ব্যাংক স্টেটমেন্ট দেখে সিদ্ধান্ত নিন।",
-            "banglish": "Rocket feed updates late hocche. Sothik information er jonno kindly bank state check kore balance confirm korun."
+            "en": "Wallet balance warning: Provider balance is under pressure. Keep balances separate and coordinate through the approved provider operations channel.",
+            "bn": "⚠️ এই প্রোভাইডারের ব্যালেন্সে চাপ দেখা যাচ্ছে। ব্যালেন্স আলাদা রাখুন এবং অনুমোদিত প্রোভাইডার অপারেশনস চ্যানেলের মাধ্যমে সমন্বয় করুন।",
+            "banglish": "Ei provider balance e pressure dekha jacche. Balance alada rekhe approved provider ops channel diye coordinate korun."
         }
     },
     "anomaly": {
@@ -78,6 +82,37 @@ LOCAL_FALLBACKS = {
         }
     }
 }
+
+def _stable_liquidity_message(details):
+    provider_name = details.get("provider_name") or "Provider"
+    reason = details.get("reason") or "Balances are stable or increasing based on rolling average flow."
+    return {
+        "en": reason,
+        "bn": "",
+        "banglish": "",
+    }
+
+def _data_quality_liquidity_message(details):
+    provider_name = details.get("provider_name") or "provider"
+    return {
+        "en": f"Confidence alert: {provider_name} forecast has sparse, volatile, delayed, or incomplete input data. Confidence is reduced; verify the latest provider record before acting.",
+        "bn": f"⚠️ {provider_name} পূর্বাভাসে ডেটা কম, অস্থির, বিলম্বিত বা অসম্পূর্ণ হতে পারে। কনফিডেন্স কমানো হয়েছে; সিদ্ধান্তের আগে সর্বশেষ প্রোভাইডার রেকর্ড যাচাই করুন।",
+        "banglish": f"{provider_name} forecast er data sparse/volatile/late hote pare. Confidence komano hoyeche; action er age latest provider record verify korun.",
+    }
+
+def _local_liquidity_fallback(details):
+    confidence = details.get("confidence")
+    risk_level = details.get("risk_level")
+    eta_minutes = details.get("eta_minutes")
+    provider_name = details.get("provider_name")
+
+    if risk_level == "low" and eta_minutes is None:
+        if confidence is not None and float(confidence) < 0.3:
+            return _data_quality_liquidity_message(details)
+        return _stable_liquidity_message(details)
+
+    fallback_map = LOCAL_FALLBACKS["liquidity"]
+    return fallback_map.get(provider_name, fallback_map["default"])
 
 def clean_json_response(raw_text):
     text = raw_text.strip()
@@ -159,6 +194,7 @@ def _generate_alerts_raw(context_type, details):
         - Current Balance: {details.get('current_balance')} BDT
         - Shortage ETA: {details.get('eta_minutes')} minutes
         - Risk Level: {details.get('risk_level')}
+        - Confidence: {details.get('confidence')}
         
         Respond ONLY with a JSON object containing precisely these keys:
         - "en": English explanation (concise, clear, professional warning)
@@ -205,9 +241,7 @@ def _generate_alerts_raw(context_type, details):
     # 3. Local Rule-Based Fallback
     print("[LLM Advisor] Executing Local Rules fallback.")
     if context_type == "liquidity":
-        prov = details.get("provider_name")
-        fallback_map = LOCAL_FALLBACKS["liquidity"]
-        return fallback_map.get(prov, fallback_map["default"])
+        return _local_liquidity_fallback(details)
     else:
         pat = details.get("pattern_type")
         fallback_map = LOCAL_FALLBACKS["anomaly"]
@@ -217,7 +251,10 @@ def generate_trilingual_alerts(context_type, details):
     """
     Executes generate_trilingual_alerts wrapping with local persistent cache lookup
     """
-    cache_key = f"{context_type}:{details.get('agent_code')}:{details.get('provider_name')}:{details.get('pattern_type')}:{details.get('risk_level')}:{details.get('eta_minutes')}"
+    if context_type == "liquidity" and details.get("risk_level") == "low" and details.get("eta_minutes") is None:
+        return _local_liquidity_fallback(details)
+
+    cache_key = f"{context_type}:{details.get('agent_code')}:{details.get('provider_name')}:{details.get('pattern_type')}:{details.get('risk_level')}:{details.get('eta_minutes')}:{details.get('confidence')}"
     if cache_key in _advisor_cache:
         return _advisor_cache[cache_key]
         
