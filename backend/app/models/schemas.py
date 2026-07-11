@@ -1,6 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Numeric, DateTime, ForeignKey, Text
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import Column, Integer, String, Numeric, DateTime, ForeignKey, Text, JSON
 from sqlalchemy.orm import relationship
 from backend.app.models.database import Base
 
@@ -89,7 +88,7 @@ class AnomalyFlag(Base):
     provider_id = Column(Integer, ForeignKey('providers.id'), nullable=False)
     pattern_type = Column(String(50)) # velocity_spike, near_identical_amounts, repeated_counterparty, off_hours_activity
     anomaly_score = Column(Numeric(5, 4))
-    evidence = Column(JSONB)
+    evidence = Column(JSON)
     confidence = Column(Numeric(4, 2))
     created_at = Column(DateTime, default=datetime.utcnow)
 
