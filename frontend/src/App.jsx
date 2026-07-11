@@ -1938,7 +1938,7 @@ function App() {
                       </button>
                     </div>
 
-                    {selectedCase.status !== 'resolved' && (actorRole === 'management' || actorRole === 'admin' || selectedCase.assigned_role === actorRole) && (
+                    {selectedCase.status !== 'resolved' && (actorRole === 'management' || actorRole === 'admin') && (
                       <div className="reassign-section" style={{ marginTop: '1.25rem', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '1rem' }}>
                         <div className="details-section-title" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Re-assign Department / Role</div>
                         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
