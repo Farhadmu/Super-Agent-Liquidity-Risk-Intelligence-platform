@@ -69,3 +69,59 @@ This file documents all the prompts and requests issued by the user during the d
 ### Phase 6: Session Logging
 19. **Prompts Compilation**
     > *"in a separate file the prompt i used everytime you will make a list of them and upload it to the github repo"*
+
+---
+
+### Phase 7: Bug Fixes & Test Coverage
+20. **Toast Notification Deduplication**
+    > *"in the toast message sometime it gives duplicate notification at a same time can you fix this issue"*
+21. **Seed Test Cases for Provider Operations**
+    > *"in the seed add a test case for provider operations"*
+22. **GitHub Push**
+    > *"push it on github"*
+
+---
+
+### Phase 8: Optional Features Audit (Bonus Points)
+23. **Problem Statement Review for Optional Features**
+    > *"read the problem statement the optional parts maybe you skipped lots of thing from the optional parts so i want you to check the optional parts beside mandatory parts so that we can get some extra bonus points"*
+
+---
+
+### Phase 9: Nearby Agent P2P — Balance Visibility
+24. **Hide Balances in P2P Support Section**
+    > *"NEARBY AGENT P2P SUPPORT OPTIONS in this section hide the balances part of that agent"*
+
+---
+
+### Phase 10: Case Ownership Reassignment
+25. **Role-Restricted Case Owner Change**
+    > *"the ops leader and super admin can change the case owner"*
+
+---
+
+### Phase 11: AI Chatbot Support System
+26. **Chatbot Case Creation & Tracking**
+    > *"beside this automated system for agents custom support implement a chatbot system which you talk with the agents and listen to the agents issues and create a case on the corrected department who will give the solution and agents also can see the case status, and if there any feedback for agent from the ops staffs agent can see that"*
+27. **Floating Button for Chatbot**
+    > *"i am thinking about instead of using fixed widget we can add a floating button at the bottom left when user click on it in the pop up modal the chatbot will show and the ticket list can see with horizontal modal view"*
+
+---
+
+### Phase 12: UX Polish — Sticky FAB & Responsiveness
+28. **Sticky FAB + Mobile Responsiveness + Dark/Light Mode**
+    > *"ai support chat it will be a sticky floating button not fix, and in the mobile devices only the icon will show text will hide, also there are some overlay issue in the case details page and in the lots of text widgets it is not properly light and dark mode supportable"*
+
+---
+
+### Phase 13: Comprehensive UI Audit & Overhaul
+29. **Full UI Analysis & Fixes**
+    > *"analisys the UI there are lots of ui related issues like in the case details part some buttons are over lapped increase the widget width in the left side a little bit the cases options taking too much spaces and in the agent dashboard make the ai support chat button in the bottom left like a whatsapp button widget. and lastly fix the dark and light mode related all issues and also improve the ops panel UI little bit"*
+
+---
+
+### Phase 14: Git Push & Prompt Log Update
+30. **GitHub Push**
+    > *"push it in the github with all standard prompt i use to work with you"*
+31. **Prompt File Update**
+    > *"you didnt updated the prompt.md file"*
