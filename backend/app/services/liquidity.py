@@ -28,6 +28,30 @@ def compute_liquidity_forecast(db: Session, agent_id: int, provider_id: int = No
         ).order_by(desc(ProviderBalance.recorded_at)).first()
         current_balance = float(bal.balance) if bal else 0.0
 
+    # Absolute depletion guard (independent of transaction velocity)
+    is_critical_depletion = False
+    depletion_threshold = 0.0
+    asset_name = ""
+    if provider_id is None:
+        if current_balance < 15000.0:
+            is_critical_depletion = True
+            depletion_threshold = 15000.0
+            asset_name = "Physical cash"
+    else:
+        if current_balance < 5000.0:
+            is_critical_depletion = True
+            depletion_threshold = 5000.0
+            asset_name = "E-money wallet"
+
+    if is_critical_depletion:
+        return {
+            "risk_level": "high",
+            "eta_minutes": 0,
+            "confidence": 0.99,
+            "reason": f"CRITICAL BALANCE DEPLETION: {asset_name} is critically depleted to {current_balance:.2f} BDT (below minimum safety limit of {depletion_threshold:.2f} BDT).",
+            "current_balance": current_balance
+        }
+
     # 2. Get transactions in the lookback window
     query = db.query(Transaction).filter(
         Transaction.agent_id == agent_id,

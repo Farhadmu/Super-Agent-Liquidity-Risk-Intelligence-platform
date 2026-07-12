@@ -38,5 +38,45 @@
     "en": "Wallet balance warning: Provider balance is under pressure. Keep balances separate and coordinate through the approved provider operations channel.",
     "bn": "⚠️ এই প্রোভাইডারের ব্যালেন্সে চাপ দেখা যাচ্ছে। ব্যালেন্স আলাদা রাখুন এবং অনুমোদিত প্রোভাইডার অপারেশনস চ্যানেলের মাধ্যমে সমন্বয় করুন।",
     "banglish": "Ei provider balance e pressure dekha jacche. Balance alada rekhe approved provider ops channel diye coordinate korun."
+  },
+  "liquidity:A001:Shared Cash:None:high:45:0.5": {
+    "en": "Depletion warning: High cash depletion risk for Shared Cash pool box. Refill recommended.",
+    "bn": "📣 বর্তমান লেনদেনের ধারা অনুযায়ী বিকেল ৫টা ২০ মিনিটের মধ্যে আপনার নগদ টাকা শেষ হয়ে যেতে পারে। সবচেয়ে বেশি চাপ আসছে বিকাশ ক্যাশ-আউট থেকে। নিরাপদভাবে সেবা চালু রাখতে কমপক্ষে ২০,০০০ টাকা অতিরিক্ত নগদ ব্যবস্থা করার পরামর্শ দেওয়া হচ্ছে।",
+    "banglish": "Apnar cash box e pressure beshi. Approved field support diye cash support coordinate korun."
+  },
+  "anomaly:A001:bKash:repeated_counterparty:None:None:0.71": {
+    "en": "Behavioral warning: Unusual transaction velocity or repeat transactional activity detected.",
+    "bn": "📣 এই এজেন্টের লেনদেনে কিছু অস্বাভাবিক বৈশিষ্ট্য পাওয়া গিয়েছে যা পর্যালোচনার দাবি রাখে।",
+    "banglish": "Agent transaction e unusual behavior pawa gese. Kichu suspicious repetition pattern match korche, kindly details track korun."
+  },
+  "anomaly:A001:bKash:repeated_counterparty:None:None:0.7": {
+    "en": "Behavioral warning: Unusual transaction velocity or repeat transactional activity detected.",
+    "bn": "📣 এই এজেন্টের লেনদেনে কিছু অস্বাভাবিক বৈশিষ্ট্য পাওয়া গিয়েছে যা পর্যালোচনার দাবি রাখে।",
+    "banglish": "Agent transaction e unusual behavior pawa gese. Kichu suspicious repetition pattern match korche, kindly details track korun."
+  },
+  "liquidity:A001:Rocket:None:high:0:0.99": {
+    "en": "Wallet balance warning: Provider balance is under pressure. Keep balances separate and coordinate through the approved provider operations channel.",
+    "bn": "⚠️ এই প্রোভাইডারের ব্যালেন্সে চাপ দেখা যাচ্ছে। ব্যালেন্স আলাদা রাখুন এবং অনুমোদিত প্রোভাইডার অপারেশনস চ্যানেলের মাধ্যমে সমন্বয় করুন।",
+    "banglish": "Ei provider balance e pressure dekha jacche. Balance alada rekhe approved provider ops channel diye coordinate korun."
+  },
+  "liquidity:A004:Nagad:None:medium:240:0.8": {
+    "en": "Wallet balance warning: Provider balance is under pressure. Keep balances separate and coordinate through the approved provider operations channel.",
+    "bn": "⚠️ এই প্রোভাইডারের ব্যালেন্সে চাপ দেখা যাচ্ছে। ব্যালেন্স আলাদা রাখুন এবং অনুমোদিত প্রোভাইডার অপারেশনস চ্যানেলের মাধ্যমে সমন্বয় করুন।",
+    "banglish": "Ei provider balance e pressure dekha jacche. Balance alada rekhe approved provider ops channel diye coordinate korun."
+  },
+  "liquidity:A001:Nagad:None:high:0:0.99": {
+    "en": "Wallet balance warning: Provider balance is under pressure. Keep balances separate and coordinate through the approved provider operations channel.",
+    "bn": "⚠️ এই প্রোভাইডারের ব্যালেন্সে চাপ দেখা যাচ্ছে। ব্যালেন্স আলাদা রাখুন এবং অনুমোদিত প্রোভাইডার অপারেশনস চ্যানেলের মাধ্যমে সমন্বয় করুন।",
+    "banglish": "Ei provider balance e pressure dekha jacche. Balance alada rekhe approved provider ops channel diye coordinate korun."
+  },
+  "anomaly:A002:bKash:repeated_counterparty:None:None:0.71": {
+    "en": "Behavioral warning: Unusual transaction velocity or repeat transactional activity detected.",
+    "bn": "📣 এই এজেন্টের লেনদেনে কিছু অস্বাভাবিক বৈশিষ্ট্য পাওয়া গিয়েছে যা পর্যালোচনার দাবি রাখে।",
+    "banglish": "Agent transaction e unusual behavior pawa gese. Kichu suspicious repetition pattern match korche, kindly details track korun."
+  },
+  "liquidity:A002:Shared Cash:None:high:0:0.99": {
+    "en": "Depletion warning: High cash depletion risk for Shared Cash pool box. Refill recommended.",
+    "bn": "📣 বর্তমান লেনদেনের ধারা অনুযায়ী বিকেল ৫টা ২০ মিনিটের মধ্যে আপনার নগদ টাকা শেষ হয়ে যেতে পারে। সবচেয়ে বেশি চাপ আসছে বিকাশ ক্যাশ-আউট থেকে। নিরাপদভাবে সেবা চালু রাখতে কমপক্ষে ২০,০০০ টাকা অতিরিক্ত নগদ ব্যবস্থা করার পরামর্শ দেওয়া হচ্ছে।",
+    "banglish": "Apnar cash box e pressure beshi. Approved field support diye cash support coordinate korun."
   }
 }

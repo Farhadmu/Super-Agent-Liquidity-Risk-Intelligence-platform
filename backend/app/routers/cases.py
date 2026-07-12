@@ -4,8 +4,9 @@ from sqlalchemy import desc
 from pydantic import BaseModel
 from typing import List, Optional
 from backend.app.models.database import get_db
-from backend.app.models.schemas import Case, Agent, Provider, CaseEvent, AnomalyFlag, LiquidityForecast
+from backend.app.models.schemas import Case, Agent, Provider, CaseEvent, AnomalyFlag, LiquidityForecast, CashPosition, ProviderBalance
 from backend.app.services.coordination import acknowledge_case, escalate_case, resolve_case, add_case_note, reassign_case
+from backend.app.services.llm_advisor import generate_trilingual_alerts
 from backend.app.routers.stream import broadcast_event
 
 router = APIRouter(prefix="/cases", tags=["cases"])
@@ -53,6 +54,7 @@ def list_cases(
 
         # Fetch original source details for explainability
         source_details = None
+        explanation = None
         if c.source_type == "anomaly":
             flag = db.query(AnomalyFlag).filter(AnomalyFlag.id == c.source_id).first()
             if flag:
@@ -62,6 +64,15 @@ def list_cases(
                     "confidence": float(flag.confidence) if flag.confidence else 0.70,
                     "evidence": flag.evidence
                 }
+                details = {
+                    "agent_code": agent.agent_code if agent else "Unknown",
+                    "provider_name": provider_obj.name if provider_obj else "Shared Cash",
+                    "pattern_type": flag.pattern_type,
+                    "anomaly_score": float(flag.anomaly_score) if flag.anomaly_score else 0.85,
+                    "confidence": float(flag.confidence) if flag.confidence else 0.70,
+                    "evidence": flag.evidence
+                }
+                explanation = generate_trilingual_alerts("anomaly", details)
         elif c.source_type == "liquidity":
             forecast = db.query(LiquidityForecast).filter(LiquidityForecast.id == c.source_id).first()
             if forecast:
@@ -71,6 +82,25 @@ def list_cases(
                     "confidence": float(forecast.confidence) if forecast.confidence else 0.80,
                     "reason": forecast.reason
                 }
+                
+                # Fetch latest balance for the explanation
+                if c.provider_id is None:
+                    pos = db.query(CashPosition).filter(CashPosition.agent_id == c.agent_id).order_by(desc(CashPosition.recorded_at)).first()
+                    current_balance = float(pos.amount) if pos else 0.0
+                else:
+                    bal = db.query(ProviderBalance).filter(ProviderBalance.agent_id == c.agent_id, ProviderBalance.provider_id == c.provider_id).order_by(desc(ProviderBalance.recorded_at)).first()
+                    current_balance = float(bal.balance) if bal else 0.0
+
+                details = {
+                    "agent_code": agent.agent_code if agent else "Unknown",
+                    "provider_name": provider_obj.name if provider_obj else "Shared Cash",
+                    "current_balance": current_balance,
+                    "eta_minutes": forecast.eta_minutes,
+                    "risk_level": forecast.risk_level,
+                    "confidence": float(forecast.confidence) if forecast.confidence else 0.80,
+                    "reason": forecast.reason
+                }
+                explanation = generate_trilingual_alerts("liquidity", details)
 
         results.append({
             "id": c.id,
@@ -90,6 +120,7 @@ def list_cases(
             "created_at": c.created_at.isoformat(),
             "updated_at": c.updated_at.isoformat(),
             "timeline": events,
+            "explanation": explanation,
             "source_details": source_details
         })
     return results

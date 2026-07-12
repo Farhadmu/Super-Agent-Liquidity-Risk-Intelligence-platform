@@ -158,7 +158,17 @@ def apply_custom_scenario(payload: CustomScenarioInput, db: Session = Depends(ge
     for prov in [bkash, nagad, rocket]:
         if not prov:
             continue
-        fc_prov = compute_liquidity_forecast(db, agent.id, provider_id=prov.id)
+        
+        # Check if the provider is delayed in this payload
+        is_delayed = False
+        if prov.name.lower() == 'bkash' and payload.bkash_delayed:
+            is_delayed = True
+        elif prov.name.lower() == 'nagad' and payload.nagad_delayed:
+            is_delayed = True
+        elif prov.name.lower() == 'rocket' and payload.rocket_delayed:
+            is_delayed = True
+
+        fc_prov = compute_liquidity_forecast(db, agent.id, provider_id=prov.id, data_lag_simulation=is_delayed)
         fc_prov_db = LiquidityForecast(
             agent_id=agent.id,
             provider_id=prov.id,
@@ -172,10 +182,20 @@ def apply_custom_scenario(payload: CustomScenarioInput, db: Session = Depends(ge
         db.commit()
         db.refresh(fc_prov_db)
         
-        if fc_prov["risk_level"] in ["high", "medium"]:
+        if is_delayed:
             create_case_from_alert(
                 db=db,
-                source_type="liquidity",
+                source_type="system", # Routes to provider_ops
+                source_id=fc_prov_db.id,
+                agent_id=agent.id,
+                provider_id=prov.id,
+                severity="review",
+                recommended_action=f"Verify {prov.name} MFS connection. Investigate gateway latency and connection logs."
+            )
+        elif fc_prov["risk_level"] in ["high", "medium"]:
+            create_case_from_alert(
+                db=db,
+                source_type="liquidity", # Routes to field_officer
                 source_id=fc_prov_db.id,
                 agent_id=agent.id,
                 provider_id=prov.id,

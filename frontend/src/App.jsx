@@ -248,6 +248,20 @@ function App() {
 
   // Error State
   const [error, setError] = useState(null);
+  const [toasts, setToasts] = useState([]);
+
+  const addToast = useCallback((message, type = 'info') => {
+    setToasts(prev => {
+      if (prev.some(t => t.message === message)) {
+        return prev;
+      }
+      const id = Date.now() + Math.random();
+      setTimeout(() => {
+        setToasts(current => current.filter(t => t.id !== id));
+      }, 4500);
+      return [...prev, { id, message, type }];
+    });
+  }, []);
 
   const [showAgentInfoModal, setShowAgentInfoModal] = useState(false);
   const [showActionsDropdown, setShowActionsDropdown] = useState(false);
@@ -353,11 +367,18 @@ function App() {
       const forecasts = await forecastRes.json();
       setAgentForecasts(forecasts);
 
+      // Check for critical warnings to trigger toasts
+      if (forecasts && forecasts.forecasts) {
+        forecasts.forecasts.forEach(f => {
+          if (f.risk_level === 'high') {
+            addToast(`🚨 CRITICAL DEPLETION WARNING: ${f.provider_name} has critical liquidity risk!`, 'warning');
+          }
+        });
+      }
+
       const anomalyRes = await fetch(`${API_BASE}/agents/${id}/anomalies`);
       const anomalies = await anomalyRes.json();
       setAgentAnomalies(anomalies);
-
-
 
       setError(null);
     } catch (err) {
@@ -366,7 +387,7 @@ function App() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [addToast]);
 
   const fetchCases = useCallback(async () => {
     try {
@@ -594,6 +615,7 @@ function App() {
         console.log("[SSE scenario_update]:", payload);
         if (selectedAgentId) fetchAgentData(selectedAgentId);
         fetchCases();
+        addToast(payload.message, "success");
       } catch (err) {
         console.error("Error parsing scenario_update event:", err);
       }
@@ -605,6 +627,7 @@ function App() {
         console.log("[SSE data_reset]:", payload);
         if (selectedAgentId) fetchAgentData(selectedAgentId);
         fetchCases();
+        addToast(payload.message, "success");
       } catch (err) {
         console.error("Error parsing data_reset event:", err);
       }
@@ -617,7 +640,7 @@ function App() {
     return () => {
       eventSource.close();
     };
-  }, [selectedAgentId, fetchAgentData, fetchCases]);
+  }, [selectedAgentId, fetchAgentData, fetchCases, addToast]);
 
   const fetchValidationMetrics = async () => {
     try {
@@ -752,126 +775,92 @@ function App() {
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
 
-        <section className="login-panel fade-in">
-          <div className="login-layout">
-            {/* LEFT: Form */}
-            <div className="login-form-column">
-              <div className="login-brand">
-                <div className="logo-icon" aria-hidden="true">Ω</div>
-                <div>
-                  <div className="login-brand-title">SUPER-AGENT</div>
-                  <div className="login-brand-sub">Multi-Provider Liquidity Platform</div>
-                </div>
-              </div>
-
-              <div className="login-intro">
-                <h2>Welcome Back</h2>
-                <p>
-                  Role-based demo access&nbsp;
-                  <HelpDot text="Each demo account opens the portal with role-specific case access and full audit identity." />
-                </p>
-              </div>
-
-              <form className="login-form" onSubmit={handleLoginSubmit} noValidate>
-                <label className="login-field">
-                  <span>Select Role</span>
-                  <select
-                    value={loginRoleId}
-                    onChange={e => handleLoginRoleChange(e.target.value)}
-                    aria-label="Select demo role"
-                  >
-                    {DEMO_USERS.filter(user => user.role !== 'admin').map(user => (
-                      <option key={user.id} value={user.id}>{user.roleLabel} — {user.name}</option>
-                    ))}
-                  </select>
-                </label>
-
-                <label className="login-field">
-                  <span>Username</span>
-                  <input
-                    value={loginUsername}
-                    onChange={e => setLoginUsername(e.target.value)}
-                    autoComplete="username"
-                    placeholder="Enter username"
-                    aria-label="Username"
-                  />
-                </label>
-
-                <label className="login-field">
-                  <span>Password</span>
-                  <input
-                    type="password"
-                    value={loginPassword}
-                    onChange={e => setLoginPassword(e.target.value)}
-                    autoComplete="current-password"
-                    placeholder="Enter password"
-                    aria-label="Password"
-                  />
-                </label>
-
-                {loginError && (
-                  <div className="login-error" role="alert">
-                    <span>⚠️</span> {loginError}
-                  </div>
-                )}
-
-                <button className="btn btn-primary login-submit-btn" type="submit">
-                  Enter Dashboard →
-                </button>
-              </form>
-
-              <div className="login-credential-strip" aria-label="Demo credentials">
-                <span>Username</span>
-                <strong>{selectedLoginUser.username}</strong>
-                <span>Password</span>
-                <strong>{selectedLoginUser.password}</strong>
-              </div>
-            </div>
-
-            {/* RIGHT: Role picker */}
-            <div className="login-role-column">
-              <div className="login-selected-preview" aria-live="polite">
-                <span className="login-role-label">{selectedLoginUser.roleLabel}</span>
-                <strong>{selectedLoginUser.name}</strong>
-                <p>{selectedLoginUser.scope}</p>
-                <div className="login-preview-grid">
-                  <div>
-                    <span>Default View</span>
-                    <strong>{selectedLoginUser.defaultTab === 'ops' ? 'Ops Control Room' : 'Agent Dashboard'}</strong>
-                  </div>
-                  <div>
-                    <span>Permission Level</span>
-                    <strong>
-                      {selectedLoginUser.role === 'management' ? 'Read-only oversight' : selectedLoginUser.role === 'agent' ? 'Own dashboard only' : 'Routed cases only'}
-                      <HelpDot text={selectedLoginUser.role === 'management' ? 'Management can review all cases and metrics, but cannot change case status.' : selectedLoginUser.role === 'agent' ? 'Agent view is scoped to the selected super agent dashboard.' : 'This role can act only on cases routed to its queue.'} />
-                    </strong>
-                  </div>
-                </div>
-              </div>
-
+        <section className="login-panel fade-in" style={{ maxWidth: '460px', width: '92%', margin: '0 auto' }}>
+          <div className="glass-card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            {/* Brand Header */}
+            <div className="login-brand" style={{ justifyContent: 'center', marginBottom: '0.5rem' }}>
+              <div className="logo-icon" aria-hidden="true">Ω</div>
               <div>
-                <p className="login-role-section-title">Choose a demo role to explore</p>
-                <div className="login-role-grid" role="listbox" aria-label="Demo roles">
-                  {DEMO_USERS.filter(user => user.role !== 'admin').map(user => (
-                    <button
-                      key={user.id}
-                      className={`login-role-card ${loginRoleId === user.id ? 'active' : ''}`}
-                      onClick={() => handleLoginRoleChange(user.id)}
-                      type="button"
-                      role="option"
-                      aria-selected={loginRoleId === user.id}
-                    >
-                      <span className="login-role-label">{user.roleLabel}</span>
-                      <span className="login-role-name">{user.name}</span>
-                      <span className="login-role-scope">
-                        {user.defaultTab === 'ops' ? '🖥 Ops View' : '📊 Agent View'}
-                        &nbsp;<HelpDot text={user.scope} />
-                      </span>
-                    </button>
-                  ))}
-                </div>
+                <div className="login-brand-title" style={{ fontSize: '1.25rem' }}>SUPER-AGENT</div>
+                <div className="login-brand-sub" style={{ fontSize: '0.7rem' }}>Multi-Provider Liquidity Platform</div>
               </div>
             </div>
+
+            <div className="login-intro" style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
+              <h2 style={{ fontSize: '1.25rem', marginBottom: '0.25rem' }}>Welcome Back</h2>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                Select a profile to load demo credentials
+              </p>
+            </div>
+
+            {/* Quick Profile Selection List */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {DEMO_USERS.map(user => (
+                <button
+                  key={user.id}
+                  type="button"
+                  className="glass-card"
+                  style={{ 
+                    padding: '0.65rem 1rem', 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center', 
+                    background: loginRoleId === user.id ? 'rgba(99, 102, 241, 0.12)' : 'rgba(255,255,255,0.02)',
+                    borderColor: loginRoleId === user.id ? 'var(--color-brand)' : 'var(--border-subtle)',
+                    cursor: 'pointer',
+                    borderRadius: 'var(--radius-md)',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onClick={() => handleLoginRoleChange(user.id)}
+                >
+                  <div style={{ textAlign: 'left' }}>
+                    <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-primary)' }}>{user.name}</div>
+                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
+                      {user.roleLabel} • {user.defaultTab === 'ops' ? '🖥 Ops view' : '📊 Agent view'}
+                    </div>
+                  </div>
+                  {loginRoleId === user.id && (
+                    <span style={{ color: 'var(--color-brand-alt)', fontSize: '0.9rem', fontWeight: 'bold' }}>✓</span>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* Credentials Fields & Login Trigger */}
+            <form className="login-form" onSubmit={handleLoginSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <label className="login-field">
+                <span>Username</span>
+                <input
+                  value={loginUsername}
+                  onChange={e => setLoginUsername(e.target.value)}
+                  autoComplete="username"
+                  placeholder="Enter username"
+                  aria-label="Username"
+                />
+              </label>
+
+              <label className="login-field">
+                <span>Password</span>
+                <input
+                  type="password"
+                  value={loginPassword}
+                  onChange={e => setLoginPassword(e.target.value)}
+                  autoComplete="current-password"
+                  placeholder="Enter password"
+                  aria-label="Password"
+                />
+              </label>
+
+              {loginError && (
+                <div className="login-error" role="alert">
+                  <span>⚠️</span> {loginError}
+                </div>
+              )}
+
+              <button className="btn btn-primary login-submit-btn" type="submit" style={{ width: '100%', minHeight: '2.5rem', marginTop: '0.25rem' }}>
+                Enter Dashboard →
+              </button>
+            </form>
           </div>
         </section>
       </main>
@@ -2057,6 +2046,28 @@ function App() {
                     </div>
                   </div>
 
+                  {/* Incident Scenario Explanation (Trilingual warning) */}
+                  {selectedCase.explanation && (
+                    <div>
+                      <div className="details-section-title">📝 Incident Scenario Explanation</div>
+                      <div className="alert-msg-bilingual" style={{ borderLeft: '3px solid var(--color-brand)', background: 'rgba(99, 102, 241, 0.04)', padding: '0.85rem', borderRadius: 'var(--radius-md)' }}>
+                        <span className="alert-msg-en" style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-primary)', marginBottom: '0.4rem' }}>
+                          🇬🇧 {selectedCase.explanation.en}
+                        </span>
+                        {selectedCase.explanation.bn && (
+                          <span className="alert-msg-bn" style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>
+                            🇧🇩 {selectedCase.explanation.bn}
+                          </span>
+                        )}
+                        {selectedCase.explanation.banglish && (
+                          <span className="alert-msg-banglish" style={{ display: 'block', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                            🗣️ {selectedCase.explanation.banglish}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Explainable AI Risk Diagnostics (SHAP style progress bars) */}
                   {selectedCase.source_details && (
                     <div>
@@ -2253,6 +2264,56 @@ function App() {
           </div>
         )}
       </main>
+
+      {/* Toast Notifications Container */}
+      <div className="toast-container" style={{
+        position: 'fixed',
+        bottom: '20px',
+        right: '20px',
+        zIndex: 1000,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '10px',
+        pointerEvents: 'none'
+      }}>
+        {toasts.map(t => (
+          <div
+            key={t.id}
+            className={`toast-alert ${t.type}`}
+            style={{
+              pointerEvents: 'auto',
+              background: t.type === 'error' || t.type === 'danger' ? 'rgba(239, 68, 68, 0.95)' : t.type === 'warning' ? 'rgba(245, 158, 11, 0.95)' : 'rgba(16, 185, 129, 0.95)',
+              color: '#fff',
+              padding: '0.75rem 1.25rem',
+              borderRadius: 'var(--radius-md)',
+              boxShadow: 'var(--shadow-md)',
+              backdropFilter: 'blur(8px)',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              animation: 'slideInFromRight 0.25s ease-out'
+            }}
+          >
+            <span>{t.type === 'error' || t.type === 'danger' ? '🚨' : t.type === 'warning' ? '⚠️' : '⚡'}</span>
+            <span>{t.message}</span>
+            <button
+              onClick={() => setToasts(prev => prev.filter(item => item.id !== t.id))}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'rgba(255,255,255,0.7)',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                marginLeft: '10px'
+              }}
+            >
+              ✕
+            </button>
+          </div>
+        ))}
+      </div>
     </>
   );
 }

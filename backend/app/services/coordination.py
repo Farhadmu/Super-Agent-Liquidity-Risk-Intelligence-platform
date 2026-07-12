@@ -8,12 +8,11 @@ def create_case_from_alert(db: Session, source_type: str, source_id: int, agent_
     """
     # Routing logic
     if source_type == 'liquidity':
-        if provider_id is not None:
-            assigned_role = 'provider_ops'
-        else:
-            assigned_role = 'field_officer'
+        assigned_role = 'field_officer'
     elif source_type == 'anomaly':
         assigned_role = 'risk_analyst'
+    elif source_type == 'system':
+        assigned_role = 'provider_ops'
     else:
         assigned_role = 'field_officer' # Fallback
 

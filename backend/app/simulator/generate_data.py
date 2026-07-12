@@ -328,6 +328,31 @@ def seed_database():
         ))
         db.commit()
 
+        # Seed connection delay case for Agent 3 (Rocket wallet feed lag -> routes to provider_ops!)
+        fc3 = compute_liquidity_forecast(db, agent3.id, rocket.id, data_lag_simulation=True)
+        fc3_db = LiquidityForecast(
+            agent_id=agent3.id,
+            provider_id=rocket.id,
+            risk_level=fc3['risk_level'],
+            eta_minutes=fc3['eta_minutes'],
+            confidence=Decimal(str(fc3['confidence'])),
+            reason=fc3['reason'],
+            computed_at=now
+        )
+        db.add(fc3_db)
+        db.commit()
+        db.refresh(fc3_db)
+
+        create_case_from_alert(
+            db=db,
+            source_type="system", # Routes to provider_ops
+            source_id=fc3_db.id,
+            agent_id=agent3.id,
+            provider_id=rocket.id,
+            severity="review",
+            recommended_action="Rocket balance feed lag detected. Check MFS API integration channel and verify server heartbeat logs."
+        )
+
         print("Seeding completed successfully!")
     finally:
         db.close()
