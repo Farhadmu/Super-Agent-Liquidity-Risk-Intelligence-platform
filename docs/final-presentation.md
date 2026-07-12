@@ -37,11 +37,11 @@ This document serves as the pitching guide and slide deck outline to showcase th
   - **Frontend**: Vite + React, styled with vanilla Glassmorphic CSS.
   - **Backend**: FastAPI Gateway, async routers, PostgreSQL DB, SQLAlchemy.
   - **Machine Learning**: IsolationForest trained on a 7-day normal baseline (contamination=0.03) with a StandardScaler pre-processing pipeline.
-  - **AI Integration**: Trilingual LLM Advisor (Gemini 2.5 / GPT-4o-mini / Local fallback) with persistent JSON caching ($0 cost for pre-run scenarios).
+  - **AI Integration**: Trilingual LLM Advisor (Gemini 3.5 / GPT-4o-mini / Local fallback) and a Context-Aware Support Chatbot (triage analyzer that conditionally creates tickets).
 - **Presenter Script**:
-  > "Our architecture is built for scale. An async FastAPI gateway processes incoming streams. Transactions are scaled using a StandardScaler and evaluated by an IsolationForest anomaly detector. We use a trilingual advisory chain that provides warnings in English, native Bengali, and colloquial Banglish. To reduce API cost, we implemented a persistent cache."
+  > "Our architecture is built for scale. An async FastAPI gateway processes incoming streams. Transactions are scaled using a StandardScaler and evaluated by an IsolationForest anomaly detector. We use a trilingual advisory chain that provides warnings in English, native Bengali, and colloquial Banglish. To reduce API cost, we implemented a persistent cache, and we have a context-aware Support Chatbot that safely triage and route agent requests."
 
-### Slide 5: Live Demo Tour (4 Story Scenarios)
+### Slide 5: Live Demo Tour (5 Story Scenarios)
 - **Pillar 1: Scenario A — The Hidden Shortage (Agent A001)**
   - *Show*: Sajib Telecom has BDT 150,000 cash, but bKash is depleted. Highlight the burn-rate warn panel: **"bKash e-money running out in ~6 mins"**.
 - **Pillar 2: Scenario B — Cash Drain & Anomaly (Agent A002)**
@@ -50,8 +50,10 @@ This document serves as the pitching guide and slide deck outline to showcase th
   - *Show*: Riyad Variety Store. Rocket feed is 3 hours delayed. Show how forecast confidence falls to 15% to alert the user of feed inconsistency.
 - **Pillar 4: Scenario D — Case Escalation (Ops Control Room)**
   - *Show*: Acknowledge, escalate, and resolve a case. Show the real-time **Case Coordination Audit Trail** tracking timeline events.
+- **Pillar 5: Scenario E — Context-Aware Responsible Chatbot**
+  - *Show*: Chatbot window. Send a trivial greeting (greeting is resolved instantly without ticket creation). Send an operational issue (chatbot queries live agent balance context, classifies the issue, routes it to `provider_ops` with scenario description and recommended ops instructions, and confirms ticket creation without making final business declarations).
 - **Presenter Script**:
-  > "Let's walk through the working prototype. Scenario A shows the hidden provider shortage—bKash is running dry and triggers a warnings banner. Scenario B shows a physical cash shortage combined with a cluster of five identical transactions. In the Ops tab, we can route, acknowledge, and resolve this case. Notice the uncompromised audit trail tracking the timeline."
+  > "Let's walk through the working prototype. Scenario A shows the hidden provider shortage—bKash is running dry and triggers a warnings banner. Scenario B shows a physical cash shortage combined with a cluster of five identical transactions. In the Ops tab, we can route, acknowledge, and resolve this case. Scenario E shows our responsible AI Chatbot in action, which triages agent queries contextually using live database metrics, and only opens tickets when human intervention is needed."
 
 ### Slide 6: Live Validation & Performance
 - **Points**:
@@ -90,3 +92,7 @@ This document serves as the pitching guide and slide deck outline to showcase th
 ### Q4: "How does the system calculate the forecasting lead time and burn rate?"
 - **Strategic Answer**:
   > "The forecasting engine aggregates transactions into 15-minute rolling windows to compute the current net transaction volume velocity (burn rate). It then projects this rate against the current wallet balance to calculate the estimated minutes until depletion. If feed latency is detected, it automatically penalizes the forecast confidence index, representing the uncertainty transparently to the user."
+
+### Q5: "How does the Support Chatbot decide when to create a ticket and how do you guarantee it won't make unauthorized decisions?"
+- **Strategic Answer**:
+  > "The Support Chatbot is strictly programmed to act in an advisory capacity. First, it doesn't open tickets for trivial queries like greetings; it uses live database metrics (cash drawer and electronic wallet positions) as context to analyze and triage actual operational problems. Second, we implement strict guardrails in the system prompt: under no circumstances can the AI make final business declarations or decisions, such as approving cash deliveries or declaring a transaction safe from fraud. It only compiles a scenario context report and recommended actions, opens a ticket for human staff routing, and explicitly notifies the agent that the final verification and resolution will be handled by a human officer."

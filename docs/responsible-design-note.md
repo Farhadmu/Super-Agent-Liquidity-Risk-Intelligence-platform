@@ -36,3 +36,12 @@ This document outlines the ethical, privacy-preserving, and human-centric design
 - **No Cross-Provider Balance Movement**:
   - E-money balances are strictly partitioned by `provider_id`. The database schema contains no routes, columns, or triggers to convert or move balances across providers.
   - The Agent View consolidates the dashboard for the agent's display convenience, but the underlying accounts remain strictly isolated, respecting legal, security, and technical boundaries.
+
+---
+
+## 5. Non-Decision Chatbot Guardrails
+- **No Automated Ticket Influx / Chat Analysis First**:
+  - The chatbot does not blindly open tickets for every user message. It first analyzes the message's intent (e.g., separating casual greetings or trivial questions from real technical or operational blockages).
+- **Prohibition of Final Declarations & Decisions**:
+  - The AI chatbot is barred from making final decisions (e.g. approving cash delivery, updating limits) or final declarations/verdicts (e.g. declaring a transaction "completely safe" or "100% fraud").
+  - The chatbot's role is restricted to gathering details, drafting a preliminary scenario report and recommendations for the human operators, and routing the ticket to the correct department. The chatbot explicitly notifies the agent that the final action requires human review and confirmation.

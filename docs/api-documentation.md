@@ -157,6 +157,35 @@ Marks case as resolved, terminating warnings.
 }
 ```
 
+### 🔹 AI Chatbot Diagnosis & Triage
+Processes incoming agent messages, analyzes them using real-time wallet and alert context, and conditionally creates support tickets based on classification.
+- **Endpoint**: `POST /cases/chat-diagnose`
+- **Request Body**:
+```json
+{
+  "message": "My Rocket balance feed is lagging and has not updated for 3 hours",
+  "agent_id": 1
+}
+```
+- **Response `200 OK` (Ticket Created)**:
+```json
+{
+  "reply": "I understand you are facing issues with connection lag/sync. I have raised a system ticket for the Provider Operations team to inspect. Please wait while they troubleshoot.",
+  "case_id": 20,
+  "status": "open",
+  "assigned_role": "provider_ops"
+}
+```
+- **Response `200 OK` (No Ticket Created for Trivial Queries/Greetings)**:
+```json
+{
+  "reply": "Thank you for reaching out to MFS Agent Support. How can I help you today?",
+  "case_id": null,
+  "status": "closed",
+  "assigned_role": null
+}
+```
+
 ---
 
 ## 3. Demo Simulator Sandbox (`/simulate`)
