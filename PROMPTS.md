@@ -129,3 +129,5 @@ This file documents all the prompts and requests issued by the user during the d
     > *"hide the super admin demo login details we will login menualy do not need to add that super admin login details in demo"*
 33. **Remove Problem Folder & presentation.pdf**
     > *"remove the problem folder and docs/presentation.pdf from the github and upload the changes in github"*
+34. **Push Architecture Diagram**
+    > *"push the architecture-diagram.md on github"*
