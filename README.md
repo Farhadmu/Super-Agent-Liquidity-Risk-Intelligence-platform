@@ -1,7 +1,10 @@
 # Multi-Provider Super Agent — Technical Architecture
 **Codex Community Hackathon — bKash presents SUST CSE Carnival 2026**
 
-A decision-support prototype that helps a multi-provider "super agent" and operations teams manage liquidity forecasts, transaction anomalies, and case resolution without auto-blocking accounts or mixing wallet boundaries.
+## 🌐 Live Deployments
+*   **Live Web Frontend**: [https://super-agent-liquidity-risk-intelligence-mdrk.onrender.com](https://super-agent-liquidity-risk-intelligence-mdrk.onrender.com)
+*   **Live Backend REST Gateway**: [https://super-agent-liquidity-risk-intelligence.onrender.com](https://super-agent-liquidity-risk-intelligence.onrender.com)
+*   **API Documentation (Swagger)**: [https://super-agent-liquidity-risk-intelligence.onrender.com/docs](https://super-agent-liquidity-risk-intelligence.onrender.com/docs)
 
 ---
 

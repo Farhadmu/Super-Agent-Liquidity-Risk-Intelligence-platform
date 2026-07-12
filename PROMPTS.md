@@ -131,3 +131,5 @@ This file documents all the prompts and requests issued by the user during the d
     > *"remove the problem folder and docs/presentation.pdf from the github and upload the changes in github"*
 34. **Push Architecture Diagram**
     > *"push the architecture-diagram.md on github"*
+35. **Add Live Demo Links in README**
+    > *"https://super-agent-liquidity-risk-intelligence-mdrk.onrender.com this is the frontend link and this is the backend link https://super-agent-liquidity-risk-intelligence.onrender.com i want you to add those live demo link in the readme file and push on github"*
