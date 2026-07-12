@@ -125,3 +125,5 @@ This file documents all the prompts and requests issued by the user during the d
     > *"push it in the github with all standard prompt i use to work with you"*
 31. **Prompt File Update**
     > *"you didnt updated the prompt.md file"*
+32. **Hide Super Admin Demo Login**
+    > *"hide the super admin demo login details we will login menualy do not need to add that super admin login details in demo"*
