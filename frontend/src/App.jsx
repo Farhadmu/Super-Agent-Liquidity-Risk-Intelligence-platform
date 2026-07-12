@@ -868,7 +868,7 @@ function App() {
 
             {/* Quick Profile Selection List */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {DEMO_USERS.map(user => (
+              {DEMO_USERS.filter(user => user.role !== 'admin').map(user => (
                 <button
                   key={user.id}
                   type="button"
