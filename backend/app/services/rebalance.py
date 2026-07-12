@@ -1,6 +1,58 @@
 from sqlalchemy.orm import Session
-from backend.app.models.schemas import Provider, ProviderBalance, CashPosition
+from sqlalchemy import desc
+from backend.app.models.schemas import Provider, ProviderBalance, CashPosition, Agent
 from backend.app.services.liquidity import compute_liquidity_forecast
+
+def get_nearby_agent_support(db: Session, agent_id: int):
+    """
+    Finds nearby agents in the same District/Thana that have balance surpluses
+    and can offer peer-to-peer liquidity support.
+    """
+    # 1. Fetch current agent details
+    agent = db.query(Agent).filter(Agent.id == agent_id).first()
+    if not agent:
+        return []
+        
+    # 2. Find other agents in the same district/thana
+    other_agents = db.query(Agent).filter(
+        Agent.id != agent_id,
+        Agent.district == agent.district
+    ).all()
+    
+    support_options = []
+    for other in other_agents:
+        # Check cash position
+        pos = db.query(CashPosition).filter(CashPosition.agent_id == other.id).order_by(desc(CashPosition.recorded_at)).first()
+        cash_balance = float(pos.amount) if pos else 0.0
+        
+        # Determine distance label based on area closeness
+        if other.area == agent.area:
+            distance = "250m"
+        elif other.thana == agent.thana:
+            distance = "600m"
+        else:
+            distance = "1.2km"
+            
+        surpluses = []
+        if cash_balance > 50000.0:
+            surpluses.append({"asset": "Physical Cash", "balance": cash_balance})
+            
+        # Provider electronic balances
+        bals = db.query(ProviderBalance).filter(ProviderBalance.agent_id == other.id).all()
+        for b in bals:
+            prov = db.query(Provider).filter(Provider.id == b.provider_id).first()
+            if prov and float(b.balance) > 40000.0:
+                surpluses.append({"asset": prov.name, "balance": float(b.balance)})
+                
+        if surpluses:
+            support_options.append({
+                "agent_code": other.agent_code,
+                "area": other.area,
+                "distance": distance,
+                "surpluses": surpluses
+            })
+            
+    return support_options
 
 def get_rebalance_recommendations(db: Session, agent_id: int):
     """
@@ -8,8 +60,6 @@ def get_rebalance_recommendations(db: Session, agent_id: int):
     generating clear, actionable rebalancing recommendations.
     """
     providers = db.query(Provider).all()
-    
-    # 1. Gather all current positions and forecasts
     pools = []
     
     # Check Shared Cash Pool
@@ -31,6 +81,7 @@ def get_rebalance_recommendations(db: Session, agent_id: int):
             "name": p.name,
             "balance": forecast["current_balance"],
             "risk_level": forecast["risk_level"],
+            "status": forecast["risk_level"],
             "eta_minutes": forecast["eta_minutes"],
             "reason": forecast["reason"],
             "display_color": p.display_color
@@ -38,9 +89,7 @@ def get_rebalance_recommendations(db: Session, agent_id: int):
 
     recommendations = []
 
-    # 2. Heuristics for rebalancing recommendations
-    
-    # Identify deficits and surpluses
+    # Deficits and surpluses
     deficits = [pool for pool in pools if pool["risk_level"] in ["high", "medium"]]
     surpluses = [pool for pool in pools if pool["risk_level"] == "low" and pool["balance"] > 25000]
 
@@ -56,19 +105,18 @@ def get_rebalance_recommendations(db: Session, agent_id: int):
                     "type": "cash_replenish",
                     "from_pool": best_surplus["name"],
                     "to_pool": "Shared Cash",
-                    "suggested_amount": round(amount_to_refill, -3), # Round to nearest thousand
+                    "suggested_amount": round(amount_to_refill, -3),
                     "action_text": f"Coordinate physical cash delivery of BDT {round(amount_to_refill, -3):,} using local merchant clearing or deposit from {best_surplus['name']} surplus wallet.",
                     "urgency": "high" if cash_pool["risk_level"] == "high" else "medium"
                 })
 
-    # Rule B: Cross-wallet e-money rebalancing (One MFS wallet low, another MFS wallet high)
+    # Rule B: Cross-wallet e-money rebalancing
     emoney_deficits = [p for p in deficits if p["provider_id"] is not None]
     emoney_surpluses = [p for p in surpluses if p["provider_id"] is not None]
     
     for def_pool in emoney_deficits:
         if emoney_surpluses:
             best_surplus = max(emoney_surpluses, key=lambda x: x["balance"])
-            # Rebalance up to half of the surplus, rounded to nearest 5k
             suggested = min(15000.0, (best_surplus["balance"] - 10000.0) / 2.0)
             if suggested > 2000:
                 recommendations.append({
@@ -80,7 +128,6 @@ def get_rebalance_recommendations(db: Session, agent_id: int):
                     "urgency": "high" if def_pool["risk_level"] == "high" else "medium"
                 })
         else:
-            # No e-money surpluses; suggest bank top-up if cash box is in surplus
             if cash_pool and cash_pool["risk_level"] == "low" and cash_pool["balance"] > 40000:
                 suggested_dep = min(20000.0, cash_pool["balance"] - 20000.0)
                 recommendations.append({
@@ -92,7 +139,7 @@ def get_rebalance_recommendations(db: Session, agent_id: int):
                     "urgency": "medium"
                 })
 
-    # Rule C: All systems are stable
+    # Rule C: All stable
     if not recommendations:
         recommendations.append({
             "type": "stable",
@@ -106,5 +153,6 @@ def get_rebalance_recommendations(db: Session, agent_id: int):
     return {
         "agent_id": agent_id,
         "recommendations": recommendations,
+        "nearby_support": get_nearby_agent_support(db, agent_id),
         "summary": f"Generated {len(recommendations)} liquidity rebalancing suggestions."
     }

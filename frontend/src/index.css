@@ -16,6 +16,7 @@
   --bg-input:        rgba(8, 12, 22, 0.85);
   --bg-sidebar:      rgba(10, 15, 28, 0.7);
   --bg-tag:          rgba(255,255,255,0.06);
+  --bg-chat-bot:     rgba(255,255,255,0.05);
 
   /* Borders */
   --border-subtle:   rgba(255,255,255,0.06);
@@ -103,6 +104,7 @@
   --bg-input:        rgba(248,250,252,0.95);
   --bg-sidebar:      rgba(255,255,255,0.8);
   --bg-tag:          rgba(0,0,0,0.05);
+  --bg-chat-bot:     rgba(0,0,0,0.05);
 
   --border-subtle:   rgba(0,0,0,0.06);
   --border-card:     rgba(0,0,0,0.10);
@@ -1626,13 +1628,16 @@ header {
    ============================================================ */
 .ops-grid {
   display: grid;
-  grid-template-columns: 1fr minmax(340px, 420px);
+  grid-template-columns: 1fr 1fr;
   gap: 1.5rem;
   min-width: 0;
   align-items: start;
 }
 
-.ops-header-card { margin-bottom: 1rem; }
+.ops-header-card {
+  margin-bottom: 1rem;
+  border-top: 2px solid var(--color-brand);
+}
 
 /* ============================================================
    STATUS SUMMARY BAR
@@ -1911,6 +1916,27 @@ header {
   gap: 1rem;
   position: sticky;
   top: calc(var(--header-height) + 1rem);
+  max-height: calc(100vh - var(--header-height) - 3rem);
+  overflow-y: auto;
+}
+
+/* ============================================================
+   SANDBOX ARCHITECT INPUTS
+   ============================================================ */
+.sandbox-input {
+  background: var(--bg-input);
+  border: 1px solid var(--border-card);
+  color: var(--text-primary);
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  outline: none;
+  font-family: var(--font-sans);
+  transition: border-color var(--trans-fast);
+}
+
+.sandbox-input:focus {
+  border-color: var(--border-focus);
 }
 
 .details-header {
@@ -1966,7 +1992,7 @@ header {
   border: 1px solid rgba(245,158,11,0.25);
   border-radius: var(--radius-md);
   background: rgba(245,158,11,0.07);
-  color: #FDE68A;
+  color: var(--color-warning);
   font-size: 0.8rem;
   line-height: 1.45;
 }
@@ -2150,6 +2176,137 @@ header {
 }
 
 /* ============================================================
+   FLOATING CHAT SUPPORT BUTTON — WHATSAPP-STYLE FAB
+   ============================================================ */
+.floating-support-btn {
+  position: fixed;
+  bottom: 1.75rem;
+  left: 1.75rem;
+  z-index: 999;
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366F1 0%, #4338CA 100%);
+  color: #fff;
+  border: 3px solid rgba(255,255,255,0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 24px rgba(99, 102, 241, 0.5), 0 8px 32px rgba(0,0,0,0.25);
+  transition: transform 0.25s var(--ease-out), box-shadow 0.25s var(--ease-out);
+  outline: none;
+  padding: 0;
+  overflow: visible;
+}
+
+.floating-support-btn:hover {
+  transform: scale(1.12) translateY(-3px);
+  box-shadow: 0 8px 40px rgba(99, 102, 241, 0.7), 0 16px 48px rgba(0,0,0,0.3);
+}
+
+.floating-support-btn:active {
+  transform: scale(0.94);
+  box-shadow: 0 2px 12px rgba(99, 102, 241, 0.4);
+}
+
+/* Icon inside the FAB */
+.support-fab-icon {
+  font-size: 1.55rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+/* Tooltip label to the right on hover */
+.floating-support-btn .support-btn-text {
+  position: absolute;
+  left: calc(100% + 14px);
+  top: 50%;
+  transform: translateY(-50%) translateX(-6px);
+  white-space: nowrap;
+  background: var(--bg-card-solid);
+  color: var(--text-primary);
+  border: 1px solid var(--border-card);
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--radius-md);
+  font-size: 0.78rem;
+  font-weight: 600;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  box-shadow: var(--shadow-md);
+}
+
+.floating-support-btn:hover .support-btn-text {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+@keyframes pulseGlow {
+  0% {
+    box-shadow: 0 4px 24px rgba(99, 102, 241, 0.5), 0 0 0 0 rgba(99, 102, 241, 0.35);
+  }
+  70% {
+    box-shadow: 0 4px 24px rgba(99, 102, 241, 0.5), 0 0 0 14px rgba(99, 102, 241, 0);
+  }
+  100% {
+    box-shadow: 0 4px 24px rgba(99, 102, 241, 0.5), 0 0 0 0 rgba(99, 102, 241, 0);
+  }
+}
+
+.pulse-glow {
+  animation: pulseGlow 2.5s infinite;
+}
+
+@media (max-width: 768px) {
+  .floating-support-btn {
+    width: 52px;
+    height: 52px;
+    bottom: 1.25rem;
+    left: 1.25rem;
+  }
+
+  .floating-support-btn .support-btn-text {
+    display: none;
+  }
+}
+
+.support-modal-content {
+  width: min(1000px, 95vw);
+  max-height: min(90vh, 650px);
+  background: var(--bg-card-solid);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  padding: 1.5rem;
+  animation: scaleIn 0.25s var(--ease-out) both;
+  display: flex;
+  flex-direction: column;
+}
+
+.support-modal-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  overflow: hidden;
+  flex: 1;
+}
+
+@media (max-width: 768px) {
+  .support-modal-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    overflow-y: auto;
+  }
+  .support-modal-content {
+    max-height: 85vh;
+  }
+}
+
+/* ============================================================
    VALIDATION METRICS
    ============================================================ */
 .metrics-report {
@@ -2302,7 +2459,7 @@ header {
 /* Laptop / Large Tablet — 1280px */
 @media (max-width: 1280px) {
   .balance-grid { grid-template-columns: 1fr 1fr; }
-  .ops-grid { grid-template-columns: 1fr minmax(300px, 380px); }
+  .ops-grid { grid-template-columns: 1fr 1fr; }
 }
 
 /* Tablet — 1024px */
@@ -2500,6 +2657,12 @@ header {
   color: #1e3a8a; /* dark blue */
 }
 
+[data-theme="light"] .access-control-note {
+  color: #92400E;
+  background: rgba(245,158,11,0.09);
+  border-color: rgba(245,158,11,0.35);
+}
+
 [data-theme="light"] body {
   background-image: var(--grad-page);
 }
@@ -2524,9 +2687,14 @@ header {
   to   { transform: translateX(0);    opacity: 1; }
 }
 
-/* On desktop/tablet: detail-pane is an ordinary grid column, no special treatment */
+/* On desktop/tablet: detail-pane is sticky so it stays in view while the case list scrolls */
 .detail-pane {
-  /* no extra styles needed above 768px */
+  position: sticky;
+  top: 1.5rem;
+  max-height: calc(100vh - 7rem);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-card) transparent;
 }
 
 /* Mobile back button — hidden on desktop */
@@ -2634,4 +2802,175 @@ header {
 [data-theme="light"] .mobile-detail-back-btn {
   background: rgba(255,255,255,0.92);
   border-bottom-color: rgba(0,0,0,0.08);
+}
+
+/* ============================================================
+   CHAT SUPPORT MODAL — THEME-AWARE CLASSES
+   ============================================================ */
+.chat-viewport {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  border: 1px solid var(--border-card);
+  background: var(--bg-input);
+  border-radius: var(--radius-md);
+  padding: 0.75rem;
+  min-height: 0;
+}
+
+.chat-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bg-tag);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.chat-input-field {
+  flex: 1;
+  background: var(--bg-input);
+  border: 1px solid var(--border-card);
+  color: var(--text-primary);
+  padding: 0.45rem 0.65rem;
+  border-radius: var(--radius-md);
+  font-size: 0.8rem;
+  font-family: var(--font-sans);
+  outline: none;
+  transition: border-color var(--trans-fast);
+  min-height: 2.25rem;
+}
+.chat-input-field:focus { border-color: var(--border-focus); }
+.chat-input-field::placeholder { color: var(--text-muted); }
+
+/* Support ticket card inside the support modal */
+.support-ticket-item {
+  padding: 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-card);
+  background: var(--bg-tag);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  transition: background var(--trans-fast), border-color var(--trans-fast);
+}
+.support-ticket-item:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-active);
+}
+
+/* Ops feedback note inside a ticket */
+.support-feedback-note {
+  background: rgba(16,185,129,0.06);
+  border: 1px solid rgba(16,185,129,0.15);
+  padding: 0.35rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.68rem;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+/* ============================================================
+   CASE DETAILS — THEME-AWARE FORM CONTROLS
+   ============================================================ */
+
+/* Owner change dropdown */
+.owner-select {
+  flex: 1;
+  font-size: 0.8rem;
+  padding: 0.35rem 0.5rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border-card);
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+  outline: none;
+  min-height: 2.1rem;
+  font-family: var(--font-sans);
+  transition: border-color var(--trans-fast);
+  cursor: pointer;
+}
+.owner-select:focus { border-color: var(--border-focus); }
+
+/* Owner audit-reason note input */
+.owner-note-input {
+  width: 100%;
+  font-size: 0.75rem;
+  padding: 0.35rem 0.5rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border-card);
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  outline: none;
+  transition: border-color var(--trans-fast);
+  min-height: 2rem;
+}
+.owner-note-input:focus { border-color: var(--border-focus); }
+.owner-note-input::placeholder { color: var(--text-muted); }
+
+/* Department reassign select */
+.reassign-select {
+  flex: 1;
+  background: var(--bg-input);
+  border: 1px solid var(--border-card);
+  color: var(--text-primary);
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  min-height: 2.2rem;
+  outline: none;
+  transition: border-color var(--trans-fast);
+  font-family: var(--font-sans);
+  cursor: pointer;
+}
+.reassign-select:focus { border-color: var(--border-focus); }
+
+/* XAI diagnostics container track bars */
+.xai-feature-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border-subtle);
+  overflow: hidden;
+}
+
+/* Ops action buttons — compact at narrow widths */
+@media (max-width: 1200px) {
+  .action-buttons-grid .btn {
+    font-size: 0.76rem;
+    padding: 0.45rem 0.6rem;
+  }
+}
+
+/* Support modal ticket list container */
+.support-tickets-list {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  min-height: 0;
+}
+
+/* Ticket card header row */
+.ticket-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+/* Ticket ID + type label */
+.ticket-id {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
 }

@@ -249,6 +249,7 @@ function App() {
   // Error State
   const [error, setError] = useState(null);
   const [toasts, setToasts] = useState([]);
+  const [rebalanceData, setRebalanceData] = useState(null);
 
   const addToast = useCallback((message, type = 'info') => {
     setToasts(prev => {
@@ -292,7 +293,16 @@ function App() {
   const [sandboxMessage, setSandboxMessage] = useState('');
   const [sandboxLoading, setSandboxLoading] = useState(false);
   const [reassignTargetRole, setReassignTargetRole] = useState('provider_ops');
+  const [newOwnerId, setNewOwnerId] = useState('');
+  const [ownerChangeNote, setOwnerChangeNote] = useState('');
+  const [ownerChangeLoading, setOwnerChangeLoading] = useState(false);
+  const [chatMessages, setChatMessages] = useState([
+    { sender: 'bot', text: 'Hello! I am your MFS AI Support Assistant. If you have cash shortage or feed updating lag issues, explain here and I will open a ticket to route it to the right department.', timestamp: new Date().toLocaleTimeString() }
+  ]);
+  const [inputMessage, setInputMessage] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
   const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
+  const [showSupportModal, setShowSupportModal] = useState(false);
 
   const actorName = currentUser?.name || 'Demo User';
   const actorRole = currentUser?.role || 'viewer';
@@ -380,6 +390,10 @@ function App() {
       const anomalies = await anomalyRes.json();
       setAgentAnomalies(anomalies);
 
+      const rebalanceRes = await fetch(`${API_BASE}/agents/${id}/rebalance`);
+      const rebalanceJson = await rebalanceRes.json();
+      setRebalanceData(rebalanceJson);
+
       setError(null);
     } catch (err) {
       console.error("Error fetching agent data:", err);
@@ -460,6 +474,59 @@ function App() {
     setShowActionsDropdown(false);
     setNoteType('');
     setCustomNote('');
+  };
+
+  const handleSendChatMessage = async () => {
+    if (!inputMessage.trim()) return;
+    const userText = inputMessage;
+    setInputMessage('');
+    
+    const userMsg = { sender: 'user', text: userText, timestamp: new Date().toLocaleTimeString() };
+    setChatMessages(prev => [...prev, userMsg]);
+    setChatLoading(true);
+    
+    try {
+      const res = await fetch(`${API_BASE}/cases/chat-diagnose`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userText,
+          agent_id: selectedAgentId
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const botMsg = { 
+          sender: 'bot', 
+          text: data.reply, 
+          timestamp: new Date().toLocaleTimeString(),
+          caseId: data.case_id 
+        };
+        setChatMessages(prev => [...prev, botMsg]);
+        if (data.case_id) {
+          addToast(`✅ Support Case #${data.case_id} successfully created!`, 'success');
+          fetchCases();
+        }
+      } else {
+        const errData = await res.json();
+        const botMsg = { 
+          sender: 'bot', 
+          text: `Sorry, I failed to create a ticket: ${errData.detail || 'Server error'}.`, 
+          timestamp: new Date().toLocaleTimeString() 
+        };
+        setChatMessages(prev => [...prev, botMsg]);
+      }
+    } catch (err) {
+      console.error(err);
+      const botMsg = { 
+        sender: 'bot', 
+        text: 'Sorry, I am having trouble connecting to the diagnostics server.', 
+        timestamp: new Date().toLocaleTimeString() 
+      };
+      setChatMessages(prev => [...prev, botMsg]);
+    } finally {
+      setChatLoading(false);
+    }
   };
 
   // Sync sandbox state when agent overview data is fetched
@@ -591,6 +658,12 @@ function App() {
   useEffect(() => {
     if (selectedCase) {
       setReassignTargetRole(selectedCase.assigned_role);
+      const match = DEMO_USERS.find(u => u.name === selectedCase.assigned_to);
+      setNewOwnerId(match ? match.id : '');
+      setOwnerChangeNote('');
+    } else {
+      setNewOwnerId('');
+      setOwnerChangeNote('');
     }
   }, [selectedCase]);
 
@@ -1225,8 +1298,7 @@ function App() {
                           <label style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-secondary)' }}>Shared Cash (BDT)</label>
                           <input 
                             type="number" 
-                            className="mobile-select-element" 
-                            style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '0.4rem 0.6rem', borderRadius: '0.5rem', fontSize: '0.85rem' }}
+                            className="sandbox-input" 
                             value={sandboxCash} 
                             onChange={e => setSandboxCash(Number(e.target.value))} 
                           />
@@ -1236,8 +1308,7 @@ function App() {
                           <label style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-secondary)' }}>bKash Balance (BDT)</label>
                           <input 
                             type="number" 
-                            className="mobile-select-element" 
-                            style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '0.4rem 0.6rem', borderRadius: '0.5rem', fontSize: '0.85rem' }}
+                            className="sandbox-input" 
                             value={sandboxBkash} 
                             onChange={e => setSandboxBkash(Number(e.target.value))} 
                           />
@@ -1251,8 +1322,7 @@ function App() {
                           <label style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-secondary)' }}>Nagad Balance (BDT)</label>
                           <input 
                             type="number" 
-                            className="mobile-select-element" 
-                            style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '0.4rem 0.6rem', borderRadius: '0.5rem', fontSize: '0.85rem' }}
+                            className="sandbox-input" 
                             value={sandboxNagad} 
                             onChange={e => setSandboxNagad(Number(e.target.value))} 
                           />
@@ -1266,8 +1336,7 @@ function App() {
                           <label style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-secondary)' }}>Rocket Balance (BDT)</label>
                           <input 
                             type="number" 
-                            className="mobile-select-element" 
-                            style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '0.4rem 0.6rem', borderRadius: '0.5rem', fontSize: '0.85rem' }}
+                            className="sandbox-input" 
                             value={sandboxRocket} 
                             onChange={e => setSandboxRocket(Number(e.target.value))} 
                           />
@@ -1279,19 +1348,18 @@ function App() {
                       </div>
 
                       <div style={{ marginTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.75rem' }}>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', fontWeight: '700', color: '#fff', cursor: 'pointer' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-primary)', cursor: 'pointer' }}>
                           <input type="checkbox" checked={sandboxInjectAnomaly} onChange={e => setSandboxInjectAnomaly(e.target.checked)} />
                           ⚡ Inject transaction velocity burst (ML Anomaly Trigger)
                         </label>
                         
                         {sandboxInjectAnomaly && (
-                          <div className="sandbox-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '1rem', marginTop: '0.75rem', padding: '0.75rem', background: 'rgba(0,0,0,0.15)', borderRadius: '0.5rem' }}>
+                          <div className="sandbox-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '1rem', marginTop: '0.75rem', padding: '0.75rem', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-card)', borderRadius: '0.5rem' }}>
                             <div className="sandbox-field" style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                               <label style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-secondary)' }}>Tx Amount (BDT)</label>
                               <input 
                                 type="number" 
-                                className="mobile-select-element" 
-                                style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '0.35rem 0.5rem', borderRadius: '0.4rem', fontSize: '0.8rem' }}
+                                className="sandbox-input" 
                                 value={sandboxAnomalyAmount} 
                                 onChange={e => setSandboxAnomalyAmount(Number(e.target.value))} 
                               />
@@ -1300,8 +1368,7 @@ function App() {
                               <label style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-secondary)' }}>Tx Count (Burst Size)</label>
                               <input 
                                 type="number" 
-                                className="mobile-select-element" 
-                                style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '0.35rem 0.5rem', borderRadius: '0.4rem', fontSize: '0.8rem' }}
+                                className="sandbox-input" 
                                 value={sandboxAnomalyCount} 
                                 onChange={e => setSandboxAnomalyCount(Number(e.target.value))} 
                               />
@@ -1310,8 +1377,7 @@ function App() {
                               <label style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-secondary)' }}>Counterparty Ref</label>
                               <input 
                                 type="text" 
-                                className="mobile-select-element" 
-                                style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '0.35rem 0.5rem', borderRadius: '0.4rem', fontSize: '0.8rem' }}
+                                className="sandbox-input" 
                                 value={sandboxAnomalyCounterparty} 
                                 onChange={e => setSandboxAnomalyCounterparty(e.target.value)} 
                               />
@@ -1319,8 +1385,7 @@ function App() {
                             <div className="sandbox-field" style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                               <label style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-secondary)' }}>Transaction Type</label>
                               <select 
-                                className="mobile-select-element" 
-                                style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '0.35rem 0.5rem', borderRadius: '0.4rem', fontSize: '0.8rem' }}
+                                className="sandbox-input" 
                                 value={sandboxAnomalyType} 
                                 onChange={e => setSandboxAnomalyType(e.target.value)}
                               >
@@ -1333,7 +1398,7 @@ function App() {
                       </div>
 
                       {sandboxMessage && (
-                        <div style={{ marginTop: '1rem', padding: '0.5rem 0.75rem', borderRadius: '0.5rem', background: 'rgba(0,0,0,0.2)', fontSize: '0.8rem', color: '#fff' }}>
+                        <div style={{ marginTop: '1rem', padding: '0.5rem 0.75rem', borderRadius: '0.5rem', background: 'var(--bg-tag)', fontSize: '0.8rem', color: 'var(--text-primary)', border: '1px solid var(--border-card)' }}>
                           {sandboxMessage}
                         </div>
                       )}
@@ -1684,6 +1749,128 @@ function App() {
                 </div>
               )}
 
+              {/* Optional Advanced: Smart Rebalancing Advisor & Peer Support Discovery */}
+              {rebalanceData && (
+                <div className="glass-card rebalance-advisor-card" style={{ marginTop: '1.5rem', padding: '1.25rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.65rem' }}>
+                    <h3 className="trend-visualizer-title" style={{ margin: 0, fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      🤖 Smart Rebalancing & Nearby Support Discovery
+                      <HelpDot text="Recommends optimal wallet rebalancing transactions and searches nearby outlets with surpluses for P2P coordination." />
+                    </h3>
+                  </div>
+
+                  <div className="rebalance-grid-layout" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.25rem' }}>
+                    
+                    {/* Rebalancing recommendations */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                      <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.04em' }}>Suggested Rebalancing Actions</div>
+                      
+                      {rebalanceData.recommendations && rebalanceData.recommendations.map((rec, idx) => {
+                        const isStable = rec.type === 'stable';
+                        return (
+                          <div 
+                            key={idx} 
+                            style={{ 
+                              padding: '0.85rem', 
+                              borderRadius: 'var(--radius-md)', 
+                              border: isStable ? '1px solid rgba(16,185,129,0.2)' : '1px solid rgba(245,158,11,0.25)', 
+                              background: isStable ? 'rgba(16,185,129,0.02)' : 'rgba(245,158,11,0.03)',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '0.4rem'
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: isStable ? 'var(--color-success)' : 'var(--color-warning)' }}>
+                                {isStable ? '🟢 Wallet Distribution Stable' : '⚠️ Action Recommended'}
+                              </span>
+                              {!isStable && (
+                                <span className={`alert-badge ${rec.urgency}`} style={{ padding: '0.15rem 0.4rem', fontSize: '0.65rem' }}>
+                                  {rec.urgency.toUpperCase()}
+                                </span>
+                              )}
+                            </div>
+                            <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>
+                              {rec.action_text}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Nearby P2P Support Discovery */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                      <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.04em' }}>Nearby Agent P2P Support Options</div>
+                      
+                      {rebalanceData.nearby_support && rebalanceData.nearby_support.length > 0 ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                          {rebalanceData.nearby_support.map((peer, idx) => (
+                            <div 
+                              key={idx} 
+                              style={{ 
+                                padding: '0.75rem', 
+                                borderRadius: 'var(--radius-md)', 
+                                border: '1px solid var(--border-card)', 
+                                background: 'rgba(255,255,255,0.02)',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                gap: '0.5rem'
+                              }}
+                            >
+                              <div>
+                                <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>
+                                  {
+                                    peer.agent_code === 'A001' ? 'Sajib Telecom' : 
+                                    peer.agent_code === 'A002' ? 'Mayer Doa Enterprise' :
+                                    peer.agent_code === 'A003' ? 'Riyad Variety Store' : 'Bismillah Store'
+                                  } ({peer.agent_code})
+                                </div>
+                                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                                  📍 {peer.area} (Same Thana)
+                                </div>
+                                
+                                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginTop: '0.35rem' }}>
+                                  {peer.surpluses.map((s, sIdx) => (
+                                    <span 
+                                      key={sIdx} 
+                                      style={{ 
+                                        padding: '0.1rem 0.35rem', 
+                                        borderRadius: '0.25rem', 
+                                        background: 'rgba(99,102,241,0.1)', 
+                                        border: '1px solid rgba(99,102,241,0.2)', 
+                                        color: theme === 'light' ? 'var(--color-brand)' : '#E0E7FF', 
+                                        fontSize: '0.65rem' 
+                                      }}
+                                    >
+                                      {s.asset} Surplus
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                              
+                              <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.15rem' }}>
+                                <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--color-brand)' }}>
+                                  🏃 {peer.distance}
+                                </span>
+                                <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>
+                                  Estimated walking
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div style={{ padding: '0.85rem', textAlign: 'center', color: 'var(--text-muted)', border: '1px dashed var(--border-card)', borderRadius: 'var(--radius-md)', fontSize: '0.75rem' }}>
+                          No nearby agents in area with wallet surpluses detected.
+                        </div>
+                      )}
+                    </div>
+
+                  </div>
+                </div>
+              )}
+
 
 
               {/* Forecast and Anomaly alerts */}
@@ -1852,6 +2039,11 @@ function App() {
                   )}
                 </div>
               </div>
+
+
+
+
+
             </div>
           </div>
         )}
@@ -1859,7 +2051,8 @@ function App() {
         {/* Tab 2: Ops Control Room (Cases) */}
         {activeTab === 'ops' && (
           <div className="ops-grid fade-in" role="tabpanel" aria-labelledby="tab-ops">
-            <div>
+            <div style={{ position: 'sticky', top: '1.5rem', maxHeight: 'calc(100vh - 7rem)', overflowY: 'auto', scrollbarWidth: 'thin', scrollbarColor: 'var(--border-card) transparent' }}>
+
               <div className="glass-card ops-header-card">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.85rem' }}>
                   <div>
@@ -2034,9 +2227,71 @@ function App() {
 
                   <div>
                     <div className="details-section-title">Case Owner</div>
-                    <div className="case-owner-text">
-                      {selectedCase.assigned_to ? `👤 ${selectedCase.assigned_to} (${getRoleLabel(selectedCase.assigned_role)})` : `👥 Unassigned (${getRoleLabel(selectedCase.assigned_role)} Queue)`}
-                    </div>
+                    {actorRole === 'management' || actorRole === 'admin' ? (
+                      <div className="owner-change-container" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.2rem' }}>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                           <select 
+                            className="owner-select"
+                            value={newOwnerId}
+                            onChange={e => setNewOwnerId(e.target.value)}
+                          >
+                            <option value="">👥 Unassigned (Revert status to Open)</option>
+                            <option value="field_officer">👤 Territory Officer Tanvir (Field Officer)</option>
+                            <option value="provider_ops">👤 Ops Officer Amina (Provider Operations)</option>
+                            <option value="risk_analyst">👤 Analyst Farhan (Risk Analyst)</option>
+                            <option value="management">👤 Management Lead Nusrat (Management)</option>
+                          </select>
+                          
+                          <button 
+                            className="btn btn-primary"
+                            style={{ fontSize: '0.75rem', minHeight: '1.8rem', padding: '0 0.8rem', background: 'var(--color-brand)', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer' }}
+                            disabled={ownerChangeLoading}
+                            onClick={async () => {
+                              setOwnerChangeLoading(true);
+                              try {
+                                const targetUser = DEMO_USERS.find(u => u.id === newOwnerId);
+                                const res = await fetch(`${API_BASE}/cases/${selectedCase.id}/change-owner`, {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({
+                                    actor_role: actorRole,
+                                    new_owner_name: targetUser ? targetUser.name : '',
+                                    new_owner_role: targetUser ? targetUser.role : selectedCase.assigned_role,
+                                    note: ownerChangeNote || 'Owner reassigned by Management/Admin.'
+                                  })
+                                });
+                                if (res.ok) {
+                                  addToast("✅ Case owner successfully reassigned!", "success");
+                                  fetchCases();
+                                } else {
+                                  const data = await res.json();
+                                  addToast(`❌ Reassignment failed: ${data.detail}`, "error");
+                                }
+                              } catch (err) {
+                                console.error(err);
+                                addToast("❌ Reassignment connection error", "error");
+                              } finally {
+                                setOwnerChangeLoading(false);
+                              }
+                            }}
+                          >
+                            {ownerChangeLoading ? 'Saving...' : 'Update Owner'}
+                          </button>
+                        </div>
+                        
+                         <input 
+                          type="text"
+                          className="owner-note-input"
+                          placeholder="Provide audit reason note (optional)..."
+                          value={ownerChangeNote}
+                          onChange={e => setOwnerChangeNote(e.target.value)}
+                        />
+                      </div>
+                    ) : (
+                      <div className="case-owner-text">
+                        {selectedCase.assigned_to ? `👤 ${selectedCase.assigned_to} (${getRoleLabel(selectedCase.assigned_role)})` : `👥 Unassigned (${getRoleLabel(selectedCase.assigned_role)} Queue)`}
+                      </div>
+                    )}
                   </div>
 
                   <div>
@@ -2072,7 +2327,7 @@ function App() {
                   {selectedCase.source_details && (
                     <div>
                       <div className="details-section-title">💡 Explainable AI Risk Diagnostics</div>
-                      <div className="glass-card xai-diagnostics-box" style={{ background: 'rgba(0,0,0,0.15)', border: '1px solid var(--border-card)', borderRadius: 'var(--radius-md)', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                      <div className="glass-card xai-diagnostics-box" style={{ background: 'var(--bg-input)', border: '1px solid var(--border-card)', borderRadius: 'var(--radius-md)', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
                         {selectedCase.source_type === 'anomaly' && selectedCase.source_details.evidence ? (
                           <>
                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
@@ -2101,7 +2356,7 @@ function App() {
                                           <span>{item.label}</span>
                                           <strong>{(val * 100).toFixed(0)}%</strong>
                                         </div>
-                                        <div style={{ height: '4px', borderRadius: '2px', background: 'rgba(255,255,255,0.05)', overflow: 'hidden' }}>
+                                        <div className="xai-feature-track">
                                           <div style={{ height: '100%', width: `${val * 100}%`, background: val > 0.6 ? 'var(--color-danger)' : val > 0.3 ? 'var(--color-warning)' : 'var(--color-accent)', borderRadius: '2px', transition: 'width 0.5s ease-out' }} />
                                         </div>
                                       </div>
@@ -2184,12 +2439,11 @@ function App() {
                     </div>
 
                     {selectedCase.status !== 'resolved' && (actorRole === 'management' || actorRole === 'admin') && (
-                      <div className="reassign-section" style={{ marginTop: '1.25rem', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '1rem' }}>
+                      <div className="reassign-section" style={{ marginTop: '1.25rem', borderTop: '1px solid var(--border-subtle)', paddingTop: '1rem' }}>
                         <div className="details-section-title" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Re-assign Department / Role</div>
                         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                           <select 
-                            className="mobile-select-element"
-                            style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '0.4rem 0.6rem', borderRadius: '0.5rem', fontSize: '0.85rem', flex: 1, minHeight: '2.2rem' }}
+                            className="reassign-select"
                             value={reassignTargetRole}
                             onChange={e => setReassignTargetRole(e.target.value)}
                           >
@@ -2264,6 +2518,177 @@ function App() {
           </div>
         )}
       </main>
+
+      {/* Floating AI Support FAB — always fixed bottom-left, visible on Agent tab only */}
+      {activeTab === 'agent' && currentUser && (
+        <button
+          className="floating-support-btn pulse-glow"
+          onClick={() => setShowSupportModal(true)}
+          aria-label="Open AI Chat Support"
+        >
+          <span className="support-fab-icon">💬</span>
+          <span className="support-btn-text">AI Support Chat</span>
+        </button>
+      )}
+
+      {/* AI Support Modal — rendered via portal directly in document.body so it always floats above all layers */}
+      {showSupportModal && createPortal(
+        <div
+          className="modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label="AI Help Desk & Tickets"
+          onClick={() => setShowSupportModal(false)}
+          style={{ zIndex: 9999 }}
+        >
+          <div className="glass-card support-modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-header" style={{ marginBottom: '1rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.5rem' }}>
+              <h3 className="details-title" style={{ margin: 0, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                💬 AI Support Portal &amp; Ticket Coordination
+              </h3>
+              <button
+                className="btn btn-secondary"
+                style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem', minHeight: '1.8rem' }}
+                onClick={() => setShowSupportModal(false)}
+              >
+                ✕ Close
+              </button>
+            </div>
+
+            <div className="support-modal-layout">
+              {/* Left Column: MFS AI Support Chatbot */}
+              <div style={{ display: 'flex', flexDirection: 'column', height: '450px' }}>
+                <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.04em', marginBottom: '0.5rem' }}>
+                  Chat with Support Bot
+                </div>
+
+                <div className="chat-viewport">
+                  {chatMessages.map((msg, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        display: 'flex',
+                        flexDirection: msg.sender === 'user' ? 'row-reverse' : 'row',
+                        alignItems: 'flex-start',
+                        gap: '0.5rem'
+                      }}
+                    >
+                      <div className="chat-avatar">
+                        {msg.sender === 'bot' ? '🤖' : '👤'}
+                      </div>
+                      <div style={{
+                        maxWidth: '75%',
+                        padding: '0.5rem 0.75rem',
+                        borderRadius: '0.85rem',
+                        borderTopLeftRadius: msg.sender === 'bot' ? '0' : '0.85rem',
+                        borderTopRightRadius: msg.sender === 'user' ? '0' : '0.85rem',
+                        background: msg.sender === 'user' ? 'var(--color-brand)' : 'var(--bg-chat-bot)',
+                        color: msg.sender === 'user' ? '#fff' : 'var(--text-primary)',
+                        fontSize: '0.78rem',
+                        lineHeight: '1.4'
+                      }}>
+                        <div>{msg.text}</div>
+                        {msg.caseId && (
+                          <div style={{ marginTop: '0.35rem', fontSize: '0.68rem', color: 'rgba(255,255,255,0.7)', fontWeight: 'bold' }}>
+                            🎫 Created Ticket #{msg.caseId}
+                          </div>
+                        )}
+                        <span style={{ display: 'block', textAlign: 'right', fontSize: '0.58rem', color: msg.sender === 'user' ? 'rgba(255,255,255,0.6)' : 'var(--text-muted)', marginTop: '0.2rem' }}>
+                          {msg.timestamp}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                  {chatLoading && (
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <div style={{ fontSize: '1.1rem' }}>🤖</div>
+                      <div className="loading-spinner" style={{ width: '10px', height: '10px' }} />
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>AI is diagnosing...</span>
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
+                  <input
+                    type="text"
+                    className="chat-input-field"
+                    placeholder="Describe your issue here..."
+                    value={inputMessage}
+                    onChange={e => setInputMessage(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') handleSendChatMessage(); }}
+                  />
+                  <button
+                    className="btn btn-primary"
+                    style={{ minHeight: '1.8rem', padding: '0 0.85rem', fontSize: '0.75rem', background: 'var(--color-brand)', borderColor: 'var(--color-brand)' }}
+                    onClick={handleSendChatMessage}
+                    disabled={chatLoading}
+                  >
+                    Send
+                  </button>
+                </div>
+              </div>
+
+              {/* Right Column: Support Tickets & Ops Feedback */}
+              <div style={{ display: 'flex', flexDirection: 'column', height: '450px' }}>
+                <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.04em', marginBottom: '0.5rem' }}>
+                  My Support Tickets &amp; Feedback
+                </div>
+
+                <div className="support-tickets-list">
+                  {cases.filter(c => c.agent_id === selectedAgentId).length === 0 ? (
+                    <p className="empty-state-text" style={{ textAlign: 'center', marginTop: '3rem' }}>No active support tickets found.</p>
+                  ) : (
+                    cases.filter(c => c.agent_id === selectedAgentId).map((c) => {
+                      const opsNotes = c.timeline ? c.timeline.filter(e => e.actor_role !== 'system') : [];
+                      return (
+                        <div key={c.id} className="support-ticket-item">
+                          <div className="ticket-header">
+                            <span className="ticket-id">Ticket #{c.id} • {c.source_type.toUpperCase()}</span>
+                            <div style={{ display: 'flex', gap: '0.3rem' }}>
+                              <span className={`alert-badge ${c.severity}`} style={{ fontSize: '0.55rem', padding: '0.05rem 0.25rem' }}>
+                                {c.severity.toUpperCase()}
+                              </span>
+                              <span className={`case-card-status ${c.status}`} style={{ fontSize: '0.55rem', padding: '0.05rem 0.3rem' }}>
+                                {c.status.toUpperCase()}
+                              </span>
+                            </div>
+                          </div>
+                          <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.35 }}>
+                            <strong>Issue:</strong> {c.recommended_action}
+                          </p>
+                          <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                            👥 Route: <span style={{ color: 'var(--color-brand)', fontWeight: 'bold' }}>{getRoleLabel(c.assigned_role)}</span>
+                            {c.assigned_to && ` (Owner: ${c.assigned_to})`}
+                          </div>
+                          {opsNotes.length > 0 && (
+                            <div style={{ marginTop: '0.4rem', borderTop: '1px solid var(--border-subtle)', paddingTop: '0.35rem' }}>
+                              <div style={{ fontSize: '0.62rem', fontWeight: 'bold', color: 'var(--color-success)', marginBottom: '0.2rem' }}>
+                                💬 Ops Feedback:
+                              </div>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                {opsNotes.map((n, nIdx) => (
+                                  <div key={nIdx} className="support-feedback-note">
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.58rem', color: 'var(--text-muted)', marginBottom: '0.1rem' }}>
+                                      <span>👤 {getRoleLabel(n.actor_role)}</span>
+                                      <span>{new Date(n.created_at).toLocaleDateString()}</span>
+                                    </div>
+                                    <div style={{ lineHeight: 1.3 }}>{n.note}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
 
       {/* Toast Notifications Container */}
       <div className="toast-container" style={{

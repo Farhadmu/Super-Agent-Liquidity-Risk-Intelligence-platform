@@ -309,3 +309,98 @@ def generate_custom_advisory(custom_system_prompt: str, context_type: str, detai
         pat = details.get("pattern_type") or "default"
         fallback_map = LOCAL_FALLBACKS["anomaly"]
         return fallback_map.get(pat, fallback_map["default"])
+
+
+def analyze_agent_chat_message(message: str, agent_info: dict, state_context: dict) -> dict:
+    gemini_key = os.environ.get("GEMINI_API_KEY")
+    openai_key = os.environ.get("OPENAI_API_KEY")
+    
+    prompt = f"""
+    You are the Agent Support Chatbot LLM for a multi-provider Mobile Financial Services (MFS) Super Agent gateway in Bangladesh.
+    You assist agent operators with their questions and route technical or operational issues to human ops teams when needed.
+
+    AGENT PROFILE:
+    - Agent Code: {agent_info.get('agent_code')}
+    - Area: {agent_info.get('area')}, Thana: {agent_info.get('thana')}, District: {agent_info.get('district')}
+
+    LIVE AGENT SYSTEM CONTEXT (REAL-TIME STATUS):
+    {json.dumps(state_context, indent=2, ensure_ascii=False)}
+
+    AGENT'S MESSAGE:
+    "{message}"
+
+    YOUR TASK:
+    Analyze the agent's problem. You must check if human support is needed and structure your analysis.
+    
+    CRITICAL POLICY RULES:
+    1. THE CHATBOT CANNOT MAKE ANY DECISION: You cannot approve or deny physical cash rebalancing, cannot alter transaction limits, cannot change fee structures, and cannot approve operations.
+    2. THE CHATBOT CANNOT GIVE ANY FINAL DECLARATION OR VERDICT: You cannot declare a transaction as "100% safe" or "definitely fraud", or declare a network error as "completely resolved".
+    3. Be clear in your reply that you are coordinating/opening a ticket for human staff to handle the final decisions, actions, and verification.
+    4. "needs_human_support" should be true ONLY if there is a real problem (e.g., cash depletion, wallet balance issues, data lag, API connection issue, suspicious duplicate cash outs, or other issues requiring manual intervention). If they are just greeting, thanking, or testing the bot, set "needs_human_support" to false.
+
+    Respond ONLY with a JSON object containing precisely these keys:
+    - "needs_human_support": boolean (true if human ops team intervention is needed, false if no ticket is required)
+    - "department": string or null (if human support is needed, choose one of: "field_officer" [for physical cash delivery, local territory support, agent drawer limits], "provider_ops" [for feed delay, API connection errors, network synchronization lag], "risk_analyst" [for fraud patterns, velocity spikes, suspicious clusters])
+    - "severity": string or null (choose one of: "info", "review", "urgent")
+    - "scenario": string or null (a concise scenario description of the agent's problem based on their message and current status, to inform the ops staff)
+    - "recommended_action": string or null (specific, actionable recommended actions for the ops staff/department on how to resolve the issue)
+    - "reply": string (polite, helpful response to the agent. If ticket created, inform them that a ticket has been opened and routed to the respective department for final human action. If not, guide them/greet them. Use Bangla/Banglish/English naturally depending on the message language, but maintain a clear, empathetic tone)
+    - "provider_name": string or null (if the issue is specific to a provider, choose "bKash", "Nagad", "Rocket", or "Shared Cash". Otherwise null)
+
+    Do not add any markdown blocks or formatting. Return raw JSON.
+    """
+    
+    # 1. Try Gemini
+    if gemini_key:
+        try:
+            return call_gemini(prompt, gemini_key)
+        except Exception as e:
+            print(f"[LLM Advisor Chatbot] Gemini failed: {e}")
+            
+    # 2. Try OpenAI
+    if openai_key:
+        try:
+            return call_openai(prompt, openai_key)
+        except Exception as e:
+            print(f"[LLM Advisor Chatbot] OpenAI failed: {e}")
+            
+    # 3. Local Rule-Based Fallback (if APIs are offline)
+    msg_lower = message.lower().strip()
+    is_lag = any(k in msg_lower for k in ["delay", "lag", "latency", "offline", "slow", "stuck", "update", "server", "ধীর", "নেটওয়ার্ক", "সার্ভার", "ল্যাগ"])
+    is_cash = any(k in msg_lower for k in ["cash", "taka", "limit", "shortage", "depletion", "money", "টাকা", "ক্যাশ", "নগদ টাকা"])
+    
+    needs_support = is_lag or is_cash
+    dept = "provider_ops" if is_lag else "field_officer" if is_cash else None
+    sev = "urgent" if is_lag else "review" if is_cash else None
+    
+    p_name = None
+    if "bkash" in msg_lower or "বিকাশ" in msg_lower:
+        p_name = "bKash"
+    elif "nagad" in msg_lower or "নগদ" in msg_lower:
+        p_name = "Nagad"
+    elif "rocket" in msg_lower or "রকেট" in msg_lower:
+        p_name = "Rocket"
+    
+    if needs_support:
+        if dept == "provider_ops":
+            reply = "I understand you are facing issues with connection lag/sync. I have raised a system ticket for the Provider Operations team to inspect. Please wait while they troubleshoot."
+            scenario = "Agent reported latency or update delay in wallet information."
+            rec = "Verify connection logs, check API endpoint sync status, and update the agent feed."
+        else:
+            reply = "I understand you are short on physical cash. I have raised a support ticket for the Territory Field Officer to arrange emergency cash rebalancing."
+            scenario = "Agent reported cash depletion or limit shortage."
+            rec = "Coordinate with cash replenishment driver/agent to deliver physical cash."
+    else:
+        reply = "Thank you for reaching out to MFS Agent Support. How can I help you today?"
+        scenario = None
+        rec = None
+        
+    return {
+        "needs_human_support": needs_support,
+        "department": dept,
+        "severity": sev,
+        "scenario": scenario,
+        "recommended_action": rec,
+        "reply": reply,
+        "provider_name": p_name
+    }
